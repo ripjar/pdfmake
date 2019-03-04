@@ -18376,7 +18376,8 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 		ownerPassword: docDefinition.ownerPassword,
 		permissions: docDefinition.permissions,
 		bufferPages: options.bufferPages || false,
-		autoFirstPage: false
+		autoFirstPage: false,
+		font: null
 	};
 
 	this.pdfKitDoc = PdfKitEngine.createPdfDocument(pdfOptions);
