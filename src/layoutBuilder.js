@@ -694,7 +694,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 				isHardWrap = true;
 			}
 		}
-
+// Here for the bidi magic
 		line.addInline(inline);
 
 		isForceContinue = inline.noNewLine && !isHardWrap;

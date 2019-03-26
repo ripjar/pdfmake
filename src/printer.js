@@ -1,6 +1,7 @@
 /*eslint no-unused-vars: ["error", {"args": "none"}]*/
 'use strict';
 
+// var TwitterCldr = require('twitter_cldr').load('en');
 var PdfKitEngine = require('./pdfKitEngine');
 var FontProvider = require('./fontProvider');
 var LayoutBuilder = require('./layoutBuilder');
@@ -417,7 +418,30 @@ function renderLine(line, x, y, pdfKitDoc) {
 
 	textDecorator.drawBackground(line, x, y, pdfKitDoc);
 
-	//TODO: line.optimizeInlines();
+	// TODO: line.optimizeInlines();
+	// Extract the text for the line
+	// Run it through the BIDI algorithm
+
+	var lineText = line.inlines.map(function(inline) {
+		return inline.text;
+	}).join("");
+	var bidi_str = window.TwitterCldr.Bidi.from_string(lineText, {"direction": "RTL"});
+	bidi_str.reorder_visually(); // We should move this to where the original re-order was located, let's make
+	// sure it works first ...
+	var correctString = bidi_str.toString();
+	correctString.split(" ");
+
+
+	// So now you have the correctly ordered/transformed string
+	// But you need to get the string components back into the inlines array.
+	
+
+	// Assuming the string is now "correct", you need to update the line.inlines array to be
+	// ordered appropriately.
+	// var codepoints = Array.from(lineText);
+  // var levels = bidi.resolve(codepoints, 0);  // [0, 0, 0, 1, 1, 1]
+  // var reordering = bidi.reorder(codepoints, levels); // [0x28, 0x29, 0x2A, 0x05D2, 0x05D1, 0x05D
+
 	for (var i = 0, l = line.inlines.length; i < l; i++) {
 		var inline = line.inlines[i];
 		var shiftToBaseline = lineHeight - ((inline.font.ascender / 1000) * inline.fontSize) - descent;
@@ -443,6 +467,7 @@ function renderLine(line, x, y, pdfKitDoc) {
 
 		pdfKitDoc._font = inline.font;
 		pdfKitDoc.fontSize(inline.fontSize);
+		// If we ran `inline.text` through the BIDI algo here, would that work?
 		pdfKitDoc.text(inline.text, x + inline.x, y + shiftToBaseline, options);
 
 		if (inline.linkToPage) {
