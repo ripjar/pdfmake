@@ -19384,7 +19384,7 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 
 	this.fontProvider = new FontProvider(this.fontDescriptors, this.pdfKitDoc);
 
-	var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(this.pdfKitDoc, docDefinition.images));
+	var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(this.pdfKitDoc, docDefinition.images), this.fontProvider);
 
 	registerDefaultTableLayouts(builder);
 	if (options.tableLayouts) {
@@ -19695,29 +19695,6 @@ function renderLine(line, x, y, pdfKitDoc) {
 	textDecorator.drawBackground(line, x, y, pdfKitDoc);
 
 	// TODO: line.optimizeInlines();
-	// Extract the text for the line
-	// Run it through the BIDI algorithm
-
-	var lineText = line.inlines.map(function(inline) {
-		return inline.text;
-	}).join("");
-	var bidi_str = window.TwitterCldr.Bidi.from_string(lineText, {"direction": "RTL"});
-	bidi_str.reorder_visually(); // We should move this to where the original re-order was located, let's make
-	// sure it works first ...
-	var correctString = bidi_str.toString();
-	correctString.split(" ");
-
-
-	// So now you have the correctly ordered/transformed string
-	// But you need to get the string components back into the inlines array.
-	
-
-	// Assuming the string is now "correct", you need to update the line.inlines array to be
-	// ordered appropriately.
-	// var codepoints = Array.from(lineText);
-  // var levels = bidi.resolve(codepoints, 0);  // [0, 0, 0, 1, 1, 1]
-  // var reordering = bidi.reorder(codepoints, levels); // [0x28, 0x29, 0x2A, 0x05D2, 0x05D1, 0x05D
-
 	for (var i = 0, l = line.inlines.length; i < l; i++) {
 		var inline = line.inlines[i];
 		var shiftToBaseline = lineHeight - ((inline.font.ascender / 1000) * inline.fontSize) - descent;
@@ -60230,12 +60207,13 @@ function addAll(target, otherArray) {
  * @param {Object} pageSize - an object defining page width and height
  * @param {Object} pageMargins - an object defining top, left, right and bottom margins
  */
-function LayoutBuilder(pageSize, pageMargins, imageMeasure) {
+function LayoutBuilder(pageSize, pageMargins, imageMeasure, fontProvider) {
 	this.pageSize = pageSize;
 	this.pageMargins = pageMargins;
 	this.tracker = new TraversalTracker();
 	this.imageMeasure = imageMeasure;
 	this.tableLayouts = {};
+	this.fontProvider = fontProvider;
 }
 
 LayoutBuilder.prototype.registerTableLayouts = function (tableLayouts) {
@@ -60345,6 +60323,8 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark, pageBreakBeforeFct) {
 
 	this.linearNodeList = [];
+	this.styleDictionary = styleDictionary;
+	this.defaultStyle = defaultStyle;
 	docStructure = this.docPreprocessor.preprocessDocument(docStructure);
 	docStructure = this.docMeasure.measureDocument(docStructure);
 
@@ -60866,7 +60846,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 	}
 
 	var line = new Line(this.writer.context().availableWidth);
-	var textTools = new TextTools(null);
+	var textTools = new TextTools(this.fontProvider);
 
 	var isForceContinue = false;
 	while (textNode._inlines && textNode._inlines.length > 0 &&
@@ -60898,6 +60878,30 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		line.addInline(inline);
 
 		isForceContinue = inline.noNewLine && !isHardWrap;
+	}
+
+	if (textNode.rtl) {
+		// 1.Extract the text from each `inline` element
+		// 2. String the text together
+		var lineElementsAsString = line.inlines.map(function(element) {
+			return element.text;
+		}).join("");
+		
+		// 3. Apply the text through the BIDI algorithm
+		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL" });
+		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
+		
+		bidiString.reorder_visually();
+
+		// var styleStack = this.styleStack.clone();
+		styleStack.push(textNode);
+		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
+		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack);
+
+		line.inlines = [];
+		updatedInlines.items.forEach(function(ul) {
+			return line.addInline(ul);
+		});
 	}
 
 	line.lastLineInParagraph = textNode._inlines.length === 0;

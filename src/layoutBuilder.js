@@ -30,12 +30,13 @@ function addAll(target, otherArray) {
  * @param {Object} pageSize - an object defining page width and height
  * @param {Object} pageMargins - an object defining top, left, right and bottom margins
  */
-function LayoutBuilder(pageSize, pageMargins, imageMeasure) {
+function LayoutBuilder(pageSize, pageMargins, imageMeasure, fontProvider) {
 	this.pageSize = pageSize;
 	this.pageMargins = pageMargins;
 	this.tracker = new TraversalTracker();
 	this.imageMeasure = imageMeasure;
 	this.tableLayouts = {};
+	this.fontProvider = fontProvider;
 }
 
 LayoutBuilder.prototype.registerTableLayouts = function (tableLayouts) {
@@ -145,6 +146,8 @@ LayoutBuilder.prototype.layoutDocument = function (docStructure, fontProvider, s
 LayoutBuilder.prototype.tryLayoutDocument = function (docStructure, fontProvider, styleDictionary, defaultStyle, background, header, footer, images, watermark, pageBreakBeforeFct) {
 
 	this.linearNodeList = [];
+	this.styleDictionary = styleDictionary;
+	this.defaultStyle = defaultStyle;
 	docStructure = this.docPreprocessor.preprocessDocument(docStructure);
 	docStructure = this.docMeasure.measureDocument(docStructure);
 
@@ -666,7 +669,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 	}
 
 	var line = new Line(this.writer.context().availableWidth);
-	var textTools = new TextTools(null);
+	var textTools = new TextTools(this.fontProvider);
 
 	var isForceContinue = false;
 	while (textNode._inlines && textNode._inlines.length > 0 &&
@@ -694,10 +697,34 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 				isHardWrap = true;
 			}
 		}
-// Here for the bidi magic
+
 		line.addInline(inline);
 
 		isForceContinue = inline.noNewLine && !isHardWrap;
+	}
+
+	if (textNode.rtl) {
+		// 1.Extract the text from each `inline` element
+		// 2. String the text together
+		var lineElementsAsString = line.inlines.map(function(element) {
+			return element.text;
+		}).join("");
+		
+		// 3. Apply the text through the BIDI algorithm
+		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL" });
+		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
+		
+		bidiString.reorder_visually();
+
+		// var styleStack = this.styleStack.clone();
+		styleStack.push(textNode);
+		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
+		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack);
+
+		line.inlines = [];
+		updatedInlines.items.forEach(function(ul) {
+			return line.addInline(ul);
+		});
 	}
 
 	line.lastLineInParagraph = textNode._inlines.length === 0;

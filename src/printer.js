@@ -108,7 +108,7 @@ PdfPrinter.prototype.createPdfKitDocument = function (docDefinition, options) {
 
 	this.fontProvider = new FontProvider(this.fontDescriptors, this.pdfKitDoc);
 
-	var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(this.pdfKitDoc, docDefinition.images));
+	var builder = new LayoutBuilder(pageSize, fixPageMargins(docDefinition.pageMargins || 40), new ImageMeasure(this.pdfKitDoc, docDefinition.images), this.fontProvider);
 
 	registerDefaultTableLayouts(builder);
 	if (options.tableLayouts) {
@@ -419,29 +419,6 @@ function renderLine(line, x, y, pdfKitDoc) {
 	textDecorator.drawBackground(line, x, y, pdfKitDoc);
 
 	// TODO: line.optimizeInlines();
-	// Extract the text for the line
-	// Run it through the BIDI algorithm
-
-	var lineText = line.inlines.map(function(inline) {
-		return inline.text;
-	}).join("");
-	var bidi_str = window.TwitterCldr.Bidi.from_string(lineText, {"direction": "RTL"});
-	bidi_str.reorder_visually(); // We should move this to where the original re-order was located, let's make
-	// sure it works first ...
-	var correctString = bidi_str.toString();
-	correctString.split(" ");
-
-
-	// So now you have the correctly ordered/transformed string
-	// But you need to get the string components back into the inlines array.
-	
-
-	// Assuming the string is now "correct", you need to update the line.inlines array to be
-	// ordered appropriately.
-	// var codepoints = Array.from(lineText);
-  // var levels = bidi.resolve(codepoints, 0);  // [0, 0, 0, 1, 1, 1]
-  // var reordering = bidi.reorder(codepoints, levels); // [0x28, 0x29, 0x2A, 0x05D2, 0x05D1, 0x05D
-
 	for (var i = 0, l = line.inlines.length; i < l; i++) {
 		var inline = line.inlines[i];
 		var shiftToBaseline = lineHeight - ((inline.font.ascender / 1000) * inline.fontSize) - descent;
