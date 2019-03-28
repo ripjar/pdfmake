@@ -664,6 +664,39 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		return newInline;
 	}
 
+	function fixedCharCodeAt(str, idx) {
+		// ex. fixedCharCodeAt('\uD800\uDC00', 0); // 65536
+		// ex. fixedCharCodeAt('\uD800\uDC00', 1); // false
+		idx = idx || 0;
+		var code = str.charCodeAt(idx);
+		var hi, low;
+		
+		// High surrogate (could change last hex to 0xDB7F
+		// to treat high private surrogates 
+		// as single characters)
+		if (0xD800 <= code && code <= 0xDBFF) {
+			hi = code;
+			low = str.charCodeAt(idx + 1);
+			if (isNaN(low)) {
+				throw 'High surrogate not followed by ' +
+					'low surrogate in fixedCharCodeAt()';
+			}
+			return ((hi - 0xD800) * 0x400) +
+				(low - 0xDC00) + 0x10000;
+		}
+		if (0xDC00 <= code && code <= 0xDFFF) { // Low surrogate
+			// We return false to allow loops to skip
+			// this iteration since should have already handled
+			// high surrogate above in the previous iteration
+			return false;
+			// hi = str.charCodeAt(idx - 1);
+			// low = code;
+			// return ((hi - 0xD800) * 0x400) +
+			//   (low - 0xDC00) + 0x10000;
+		}
+		return code;
+	}
+
 	if (!textNode._inlines || textNode._inlines.length === 0) {
 		return null;
 	}
@@ -711,18 +744,51 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		}).join("");
 		
 		// 3. Apply the text through the BIDI algorithm
-		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL" });
+		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL", default_direction: "RTL" });
 		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
-		
 		bidiString.reorder_visually();
+
+		var codepoints = [];
+		for(var i = 0; i < lineElementsAsString.length; i++) {
+			codepoints.push(fixedCharCodeAt(lineElementsAsString, i));
+		}
+		// lineElementsAsString.map(function(character, index) {
+		// 	return fixedCharCodeAt(character, index);
+		// });
+		var levels = window.bbcCldrResolve(codepoints, 0);
+		var reordering = window.bbcCldrReorder(codepoints, levels); // Gives you the updated codepoints
+
+// Run bidiString.toString() through fixedCharCodeAt and display
+// Display reordering
+
+		// Let's run it through the bbc one and compare and contrast
+
+	
+		// Let's check out the code point layer as they don't lie.
+
 
 		// var styleStack = this.styleStack.clone();
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
-		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack);
+		// What if ... you run the per-word algorithm here? That way you're building the inlines based on the final string
+
+		// At this point, bidiString.toString() is correct as far as order is concerned
+		// 
+
+
+		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack, textNode.rtl);
+
+		// What if ... you have the codepoints of the reversed string.
+		// Let's just work with the string that currently doesn't work and
+		// go from there.
 
 		line.inlines = [];
 		updatedInlines.items.forEach(function(ul) {
+			// Re run the text through BIDI?
+			// const reReOrdered = 
+			var testString = window.TwitterCldr.Bidi.from_string(ul.text, { "direction": "RTL" });
+			testString.reorder_visually();
+			ul.text = testString.toString();
 			return line.addInline(ul);
 		});
 	}

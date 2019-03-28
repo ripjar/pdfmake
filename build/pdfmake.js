@@ -11345,8 +11345,8 @@ function TextTools(fontProvider) {
  * @param  {Object} styleContextStack current style stack
  * @return {Object}                   collection of inlines, minWidth, maxWidth
  */
-TextTools.prototype.buildInlines = function (textArray, styleContextStack) {
-	var measured = measure(this.fontProvider, textArray, styleContextStack);
+TextTools.prototype.buildInlines = function (textArray, styleContextStack, isRtl) {
+	var measured = measure(this.fontProvider, textArray, styleContextStack, isRtl);
 
 	var minWidth = 0,
 		maxWidth = 0,
@@ -11418,9 +11418,21 @@ TextTools.prototype.widthOfString = function (text, font, fontSize, characterSpa
 	return widthOfString(text, font, fontSize, characterSpacing, fontFeatures);
 };
 
-function splitWords(text, noWrap) {
+function splitWords(text, noWrap, isRTL) {
 	var results = [];
 	text = text.replace(/\t/g, '    ');
+
+	// if (isRTL) {
+	// 	var bidi_str = window.TwitterCldr.Bidi.from_string(text, {"direction": "RTL"});
+	// 	bidi_str.reorder_visually();
+	// 	text = bidi_str.toString();
+	// }
+
+	// Apply RTL on text.
+	// For each word, then reapply RTL on text to get the correct orientation
+	// Then add that to the array
+
+
 
 	if (noWrap) {
 		results.push({text: text});
@@ -11432,7 +11444,15 @@ function splitWords(text, noWrap) {
 	var bk;
 
 	while (bk = breaker.nextBreak()) {
+		// When it's RTL, this goes from right to left. It's almost
+		// as though we need the original string to be "invalid".
 		var word = text.slice(last, bk.position);
+
+		// if (isRTL) {
+		// 	var bidi_word = window.TwitterCldr.Bidi.from_string(word, {"direction": "RTL"});
+		// 	bidi_word.reorder_visually();
+		// 	word = bidi_word.toString();
+		// }
 
 		if (bk.required || word.match(/\r?\n$|\r$/)) { // new line
 			word = word.replace(/\r?\n$|\r$/, '');
@@ -11460,7 +11480,7 @@ function copyStyle(source, destination) {
 	return destination;
 }
 
-function normalizeTextArray(array, styleContextStack) {
+function normalizeTextArray(array, styleContextStack, isRtl) {
 	function flatten(array) {
 		return array.reduce(function (prev, cur) {
 			var current = isArray(cur.text) ? flatten(cur.text) : cur;
@@ -11481,7 +11501,7 @@ function normalizeTextArray(array, styleContextStack) {
 		var word = words[index].text;
 
 		if (noWrap) {
-			var tmpWords = splitWords(normalizeString(word), false);
+			var tmpWords = splitWords(normalizeString(word), false, isRtl);
 			if (isUndefined(tmpWords[tmpWords.length - 1])) {
 				return null;
 			}
@@ -11510,16 +11530,16 @@ function normalizeTextArray(array, styleContextStack) {
 			if (item._textRef && item._textRef._textNodeRef.text) {
 				item.text = item._textRef._textNodeRef.text;
 			}
-			words = splitWords(normalizeString(item.text), noWrap);
+			words = splitWords(normalizeString(item.text), noWrap, isRtl);
 			style = copyStyle(item);
 		} else {
-			words = splitWords(normalizeString(item), noWrap);
+			words = splitWords(normalizeString(item), noWrap, isRtl);
 		}
 
 		if (lastWord && words.length) {
 			var firstWord = getOneWord(0, words, noWrap);
 
-			var wrapWords = splitWords(normalizeString(lastWord + firstWord), false);
+			var wrapWords = splitWords(normalizeString(lastWord + firstWord), false, isRtl);
 			if (wrapWords.length === 1) {
 				results[results.length - 1].noNewLine = true;
 			}
@@ -11583,8 +11603,8 @@ function getStyleProperty(item, styleContextStack, property, defaultValue) {
 	}
 }
 
-function measure(fontProvider, textArray, styleContextStack) {
-	var normalized = normalizeTextArray(textArray, styleContextStack);
+function measure(fontProvider, textArray, styleContextStack, isRtl) {
+	var normalized = normalizeTextArray(textArray, styleContextStack, isRtl);
 
 	if (normalized.length) {
 		var leadingIndent = getStyleProperty(normalized[0], styleContextStack, 'leadingIndent', 0);
@@ -60841,6 +60861,39 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		return newInline;
 	}
 
+	function fixedCharCodeAt(str, idx) {
+		// ex. fixedCharCodeAt('\uD800\uDC00', 0); // 65536
+		// ex. fixedCharCodeAt('\uD800\uDC00', 1); // false
+		idx = idx || 0;
+		var code = str.charCodeAt(idx);
+		var hi, low;
+		
+		// High surrogate (could change last hex to 0xDB7F
+		// to treat high private surrogates 
+		// as single characters)
+		if (0xD800 <= code && code <= 0xDBFF) {
+			hi = code;
+			low = str.charCodeAt(idx + 1);
+			if (isNaN(low)) {
+				throw 'High surrogate not followed by ' +
+					'low surrogate in fixedCharCodeAt()';
+			}
+			return ((hi - 0xD800) * 0x400) +
+				(low - 0xDC00) + 0x10000;
+		}
+		if (0xDC00 <= code && code <= 0xDFFF) { // Low surrogate
+			// We return false to allow loops to skip
+			// this iteration since should have already handled
+			// high surrogate above in the previous iteration
+			return false;
+			// hi = str.charCodeAt(idx - 1);
+			// low = code;
+			// return ((hi - 0xD800) * 0x400) +
+			//   (low - 0xDC00) + 0x10000;
+		}
+		return code;
+	}
+
 	if (!textNode._inlines || textNode._inlines.length === 0) {
 		return null;
 	}
@@ -60888,18 +60941,45 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		}).join("");
 		
 		// 3. Apply the text through the BIDI algorithm
-		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL" });
+		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL", default_direction: "RTL" });
 		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
-		
 		bidiString.reorder_visually();
+
+		var codepoints = [];
+		for(var i = 0; i < lineElementsAsString.length; i++) {
+			codepoints.push(fixedCharCodeAt(lineElementsAsString, i));
+		}
+		// lineElementsAsString.map(function(character, index) {
+		// 	return fixedCharCodeAt(character, index);
+		// });
+		var levels = window.bbcCldrResolve(codepoints, 0);
+		var reordering = window.bbcCldrReorder(codepoints, levels); // Gives you the updated codepoints
+
+// Run bidiString.toString() through fixedCharCodeAt and display
+// Display reordering
+
+		// Let's run it through the bbc one and compare and contrast
+
+	
+		// Let's check out the code point layer as they don't lie.
+
 
 		// var styleStack = this.styleStack.clone();
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
-		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack);
+		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack, textNode.rtl);
+
+		// What if ... you have the codepoints of the reversed string.
+		// Let's just work with the string that currently doesn't work and
+		// go from there.
 
 		line.inlines = [];
 		updatedInlines.items.forEach(function(ul) {
+			// Re run the text through BIDI?
+			// const reReOrdered = 
+			var testString = window.TwitterCldr.Bidi.from_string(ul.text, { "direction": "RTL" });
+			testString.reorder_visually();
+			ul.text = testString.toString();
 			return line.addInline(ul);
 		});
 	}
@@ -61406,7 +61486,7 @@ DocMeasure.prototype.measureLeaf = function (node) {
 	var styleStack = this.styleStack.clone();
 	styleStack.push(node);
 
-	var data = this.textTools.buildInlines(node.text, styleStack);
+	var data = this.textTools.buildInlines(node.text, styleStack, node.rtl);
 
 	node._inlines = data.items;
 	node._minWidth = data.minWidth;
