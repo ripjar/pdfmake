@@ -60894,6 +60894,30 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		return code;
 	}
 
+	function spreadify (fn, fnThis) {
+		return function (/* accepts unlimited arguments */) {
+				// Holds the processed arguments for use by `fn`
+				var spreadArgs = [ ];
+
+				// Caching length
+				var length = arguments.length;
+
+				var currentArg;
+
+				for (var i = 0; i < length; i++) {
+						currentArg = arguments[i];
+
+						if (Array.isArray(currentArg)) {
+								spreadArgs = spreadArgs.concat(currentArg);
+						} else {
+								spreadArgs.push(currentArg);
+						}
+				}
+
+				return fn.apply(fnThis, spreadArgs);
+		};
+}
+
 	if (!textNode._inlines || textNode._inlines.length === 0) {
 		return null;
 	}
@@ -60967,7 +60991,47 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		// var styleStack = this.styleStack.clone();
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
-		var updatedInlines = textTools.buildInlines([{ text: bidiString.toString() }], styleStack, textNode.rtl);
+		// What if ... you run the per-word algorithm here? That way you're building the inlines based on the final string
+
+		// At this point, bidiString.toString() is correct as far as order is concerned
+		// 
+
+		// 1. Cut bidiString..string_arr by the number 32 (space)
+		// 2. Loop over each group of code points.
+		// 3. Convert the group to a string
+		// 4. Run it through the algorithm
+		// 5. Stich the string together and run it through buildInlines
+
+		var arrayOfCodePoints = [];
+		var arrayOfStrings = [];
+		var currentGroup = [];
+		for (var index = 0; index < bidiString.string_arr.length; index++) {
+			// if we encounter a space and this is not the first codepoint
+			if (bidiString.string_arr[index] === 32 && currentGroup.length) {
+				arrayOfCodePoints.push(currentGroup);
+				currentGroup = [];
+				currentGroup.push(bidiString.string_arr[index]);
+			// if this is the last character
+			} else if (index + 1 === bidiString.string_arr.length) {
+				currentGroup.push(bidiString.string_arr[index]);
+				arrayOfCodePoints.push(currentGroup);
+				currentGroup = [];
+			} else {
+				currentGroup.push(bidiString.string_arr[index]);
+			}
+		}
+
+		for (var groupIndex =  0; groupIndex < arrayOfCodePoints.length; groupIndex++) {
+			var groupString = spreadify(String.fromCharCode, String)(arrayOfCodePoints[groupIndex]);
+			var testString = window.TwitterCldr.Bidi.from_string(groupString, { "direction": "RTL" });
+			testString.reorder_visually();
+			arrayOfStrings.push(testString.toString());
+		}
+
+		// Maybe at this point you'll have the correct string. But we'll see.
+
+
+		var updatedInlines = textTools.buildInlines([{ text: arrayOfStrings.join("")}], styleStack, textNode.rtl);
 
 		// What if ... you have the codepoints of the reversed string.
 		// Let's just work with the string that currently doesn't work and
@@ -60977,9 +61041,9 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		updatedInlines.items.forEach(function(ul) {
 			// Re run the text through BIDI?
 			// const reReOrdered = 
-			var testString = window.TwitterCldr.Bidi.from_string(ul.text, { "direction": "RTL" });
-			testString.reorder_visually();
-			ul.text = testString.toString();
+			// var testString = window.TwitterCldr.Bidi.from_string(ul.text, { "direction": "RTL" });
+			// testString.reorder_visually();
+			// ul.text = testString.toString();
 			return line.addInline(ul);
 		});
 	}
