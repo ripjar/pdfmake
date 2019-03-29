@@ -101,21 +101,9 @@ TextTools.prototype.widthOfString = function (text, font, fontSize, characterSpa
 	return widthOfString(text, font, fontSize, characterSpacing, fontFeatures);
 };
 
-function splitWords(text, noWrap, isRTL) {
+function splitWords(text, noWrap) {
 	var results = [];
 	text = text.replace(/\t/g, '    ');
-
-	// if (isRTL) {
-	// 	var bidi_str = window.TwitterCldr.Bidi.from_string(text, {"direction": "RTL"});
-	// 	bidi_str.reorder_visually();
-	// 	text = bidi_str.toString();
-	// }
-
-	// Apply RTL on text.
-	// For each word, then reapply RTL on text to get the correct orientation
-	// Then add that to the array
-
-
 
 	if (noWrap) {
 		results.push({text: text});
@@ -127,16 +115,7 @@ function splitWords(text, noWrap, isRTL) {
 	var bk;
 
 	while (bk = breaker.nextBreak()) {
-		// When it's RTL, this goes from right to left. It's almost
-		// as though we need the original string to be "invalid".
 		var word = text.slice(last, bk.position);
-
-		// if (isRTL) {
-		// 	var bidi_word = window.TwitterCldr.Bidi.from_string(word, {"direction": "RTL"});
-		// 	bidi_word.reorder_visually();
-		// 	word = bidi_word.toString();
-		// }
-
 		if (bk.required || word.match(/\r?\n$|\r$/)) { // new line
 			word = word.replace(/\r?\n$|\r$/, '');
 			results.push({text: word, lineEnd: true});
@@ -184,7 +163,7 @@ function normalizeTextArray(array, styleContextStack, isRtl) {
 		var word = words[index].text;
 
 		if (noWrap) {
-			var tmpWords = splitWords(normalizeString(word), false, isRtl);
+			var tmpWords = splitWords(normalizeString(word), false);
 			if (isUndefined(tmpWords[tmpWords.length - 1])) {
 				return null;
 			}
@@ -213,16 +192,16 @@ function normalizeTextArray(array, styleContextStack, isRtl) {
 			if (item._textRef && item._textRef._textNodeRef.text) {
 				item.text = item._textRef._textNodeRef.text;
 			}
-			words = splitWords(normalizeString(item.text), noWrap, isRtl);
+			words = splitWords(normalizeString(item.text), noWrap);
 			style = copyStyle(item);
 		} else {
-			words = splitWords(normalizeString(item), noWrap, isRtl);
+			words = splitWords(normalizeString(item), noWrap);
 		}
 
 		if (lastWord && words.length) {
 			var firstWord = getOneWord(0, words, noWrap);
 
-			var wrapWords = splitWords(normalizeString(lastWord + firstWord), false, isRtl);
+			var wrapWords = splitWords(normalizeString(lastWord + firstWord), false);
 			if (wrapWords.length === 1) {
 				results[results.length - 1].noNewLine = true;
 			}
