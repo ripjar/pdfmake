@@ -776,28 +776,9 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		for(var i = 0; i < lineElementsAsString.length; i++) {
 			codepoints.push(fixedCharCodeAt(lineElementsAsString, i));
 		}
-		// lineElementsAsString.map(function(character, index) {
-		// 	return fixedCharCodeAt(character, index);
-		// });
-		var levels = window.bbcCldrResolve(codepoints, 0);
-		var reordering = window.bbcCldrReorder(codepoints, levels); // Gives you the updated codepoints
 
-// Run bidiString.toString() through fixedCharCodeAt and display
-// Display reordering
-
-		// Let's run it through the bbc one and compare and contrast
-
-	
-		// Let's check out the code point layer as they don't lie.
-
-
-		// var styleStack = this.styleStack.clone();
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
-		// What if ... you run the per-word algorithm here? That way you're building the inlines based on the final string
-
-		// At this point, bidiString.toString() is correct as far as order is concerned
-		// 
 
 		// 1. Cut bidiString..string_arr by the number 32 (space)
 		// 2. Loop over each group of code points.
@@ -831,22 +812,10 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			arrayOfStrings.push(testString.toString());
 		}
 
-		// Maybe at this point you'll have the correct string. But we'll see.
-
-
 		var updatedInlines = textTools.buildInlines([{ text: arrayOfStrings.join("")}], styleStack, textNode.rtl);
-
-		// What if ... you have the codepoints of the reversed string.
-		// Let's just work with the string that currently doesn't work and
-		// go from there.
 
 		line.inlines = [];
 		updatedInlines.items.forEach(function(ul) {
-			// Re run the text through BIDI?
-			// const reReOrdered = 
-			// var testString = window.TwitterCldr.Bidi.from_string(ul.text, { "direction": "RTL" });
-			// testString.reorder_visually();
-			// ul.text = testString.toString();
 			return line.addInline(ul);
 		});
 	}
