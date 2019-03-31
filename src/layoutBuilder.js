@@ -373,6 +373,8 @@ function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
 				currentWord.push(lineAsArrayOfCodepoints[index]);
 			}
 		}
+
+		return arrayOfCodePoints;
 }
 
 /**
@@ -380,22 +382,15 @@ function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
  * to correctly the order the line and then re-runs each word through the BIDI
  * algorithm to ensure characters appear in the correct direction.
  * @param {object} line the line to be rendered in the PDF that requires transforming
- * @param {object} textNode the original node representing the text being transformed
- * @param {function} buildInlinesFn produces the objects that represent individual words
+ * @param {object} styleStack the styles to be applied to the text in the line
+ * @param {object} textTools contains various utilities for building parts of the PDF
  */
-function transformLineForRtl(line, textNode, buildInlinesFn) {
+function transformLineForRtl(line, styleStack, textTools) {
 		// Extract each word (aka inline) from the line and string it together
 		// to form the line as a string
 		var lineElementsAsString = line.inlines.map(function(element) {
 			return element.text;
 		}).join("");
-
-				
-		// The styleStack tells the buildInlines utility how to style
-		// each inline.
-		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
-		styleStack.push(textNode);
-		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
 		
 		// Run the line as a string through the BIDI algorithm
 		// This will resolve the ordering of the words in the sentence
@@ -431,7 +426,7 @@ function transformLineForRtl(line, textNode, buildInlinesFn) {
 		}
 
 		// Pass the transformed words, as a single string, through the buildInlines utility
-		var updatedInlines = buildInlinesFn([{ text: arrayOfTransformedWords.join("")}], styleStack);
+		var updatedInlines = textTools.buildInlines([{ text: arrayOfTransformedWords.join("")}], styleStack);
 
 		// Wipe the existing words (inlines) from this line ...
 		line.inlines = [];
@@ -809,7 +804,13 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
 	if (textNode.rtl) {
-		transformLineForRtl(line, textNode, textTools.buildInlines);
+		// The styleStack tells the buildInlines utility how to style
+		// each inline.
+		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
+		styleStack.push(textNode);
+		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
+
+		transformLineForRtl(line, styleStack, textTools);
 	}
 
 	line.lastLineInParagraph = textNode._inlines.length === 0;
