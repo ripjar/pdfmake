@@ -49,7 +49,7 @@ var Utilities = require('./utilities');
     string_arr = Utilities.unpack_string(str);
     options.types || (options.types = this.compute_types(string_arr));
     options.string_arr || (options.string_arr = string_arr);
-    return new TwitterCldr.Bidi(options);
+    return new Bidi(options);
   };
 
   Bidi.from_type_array = function(types, options) {
@@ -57,7 +57,7 @@ var Utilities = require('./utilities');
       options = {};
     }
     options.types || (options.types = types);
-    return new TwitterCldr.Bidi(options);
+    return new Bidi(options);
   };
 
   Bidi.compute_types = function(arr) {
@@ -65,7 +65,7 @@ var Utilities = require('./utilities');
     _results = [];
     for (_i = 0, _len = arr.length; _i < _len; _i++) {
       code_point = arr[_i];
-      _results.push(TwitterCldr.Bidi.bidi_class_for(code_point));
+      _results.push(Bidi.bidi_class_for(code_point));
     }
     return _results;
   };
