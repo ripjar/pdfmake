@@ -14,6 +14,8 @@ var pack = require('./helpers').pack;
 var offsetVector = require('./helpers').offsetVector;
 var fontStringify = require('./helpers').fontStringify;
 var isFunction = require('./helpers').isFunction;
+var spreadify = require('./helpers').spreadify;
+var fixedCharCodeAt = require('./helpers').fixedCharCodeAt;
 var TextTools = require('./textTools');
 var StyleContextStack = require('./styleContextStack');
 
@@ -664,63 +666,6 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		return newInline;
 	}
 
-	function fixedCharCodeAt(str, idx) {
-		// ex. fixedCharCodeAt('\uD800\uDC00', 0); // 65536
-		// ex. fixedCharCodeAt('\uD800\uDC00', 1); // false
-		idx = idx || 0;
-		var code = str.charCodeAt(idx);
-		var hi, low;
-		
-		// High surrogate (could change last hex to 0xDB7F
-		// to treat high private surrogates 
-		// as single characters)
-		if (0xD800 <= code && code <= 0xDBFF) {
-			hi = code;
-			low = str.charCodeAt(idx + 1);
-			if (isNaN(low)) {
-				throw 'High surrogate not followed by ' +
-					'low surrogate in fixedCharCodeAt()';
-			}
-			return ((hi - 0xD800) * 0x400) +
-				(low - 0xDC00) + 0x10000;
-		}
-		if (0xDC00 <= code && code <= 0xDFFF) { // Low surrogate
-			// We return false to allow loops to skip
-			// this iteration since should have already handled
-			// high surrogate above in the previous iteration
-			return false;
-			// hi = str.charCodeAt(idx - 1);
-			// low = code;
-			// return ((hi - 0xD800) * 0x400) +
-			//   (low - 0xDC00) + 0x10000;
-		}
-		return code;
-	}
-
-	function spreadify (fn, fnThis) {
-		return function (/* accepts unlimited arguments */) {
-				// Holds the processed arguments for use by `fn`
-				var spreadArgs = [ ];
-
-				// Caching length
-				var length = arguments.length;
-
-				var currentArg;
-
-				for (var i = 0; i < length; i++) {
-						currentArg = arguments[i];
-
-						if (Array.isArray(currentArg)) {
-								spreadArgs = spreadArgs.concat(currentArg);
-						} else {
-								spreadArgs.push(currentArg);
-						}
-				}
-
-				return fn.apply(fnThis, spreadArgs);
-		};
-}
-
 	if (!textNode._inlines || textNode._inlines.length === 0) {
 		return null;
 	}
@@ -812,7 +757,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			arrayOfStrings.push(testString.toString());
 		}
 
-		var updatedInlines = textTools.buildInlines([{ text: arrayOfStrings.join("")}], styleStack, textNode.rtl);
+		var updatedInlines = textTools.buildInlines([{ text: arrayOfStrings.join("")}], styleStack);
 
 		line.inlines = [];
 		updatedInlines.items.forEach(function(ul) {

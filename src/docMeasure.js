@@ -206,7 +206,7 @@ DocMeasure.prototype.measureLeaf = function (node) {
 	var styleStack = this.styleStack.clone();
 	styleStack.push(node);
 
-	var data = this.textTools.buildInlines(node.text, styleStack, node.rtl);
+	var data = this.textTools.buildInlines(node.text, styleStack);
 
 	node._inlines = data.items;
 	node._minWidth = data.minWidth;

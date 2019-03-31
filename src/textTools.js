@@ -28,8 +28,8 @@ function TextTools(fontProvider) {
  * @param  {Object} styleContextStack current style stack
  * @return {Object}                   collection of inlines, minWidth, maxWidth
  */
-TextTools.prototype.buildInlines = function (textArray, styleContextStack, isRtl) {
-	var measured = measure(this.fontProvider, textArray, styleContextStack, isRtl);
+TextTools.prototype.buildInlines = function (textArray, styleContextStack) {
+	var measured = measure(this.fontProvider, textArray, styleContextStack);
 
 	var minWidth = 0,
 		maxWidth = 0,
@@ -142,7 +142,7 @@ function copyStyle(source, destination) {
 	return destination;
 }
 
-function normalizeTextArray(array, styleContextStack, isRtl) {
+function normalizeTextArray(array, styleContextStack) {
 	function flatten(array) {
 		return array.reduce(function (prev, cur) {
 			var current = isArray(cur.text) ? flatten(cur.text) : cur;
@@ -265,8 +265,8 @@ function getStyleProperty(item, styleContextStack, property, defaultValue) {
 	}
 }
 
-function measure(fontProvider, textArray, styleContextStack, isRtl) {
-	var normalized = normalizeTextArray(textArray, styleContextStack, isRtl);
+function measure(fontProvider, textArray, styleContextStack) {
+	var normalized = normalizeTextArray(textArray, styleContextStack);
 
 	if (normalized.length) {
 		var leadingIndent = getStyleProperty(normalized[0], styleContextStack, 'leadingIndent', 0);
