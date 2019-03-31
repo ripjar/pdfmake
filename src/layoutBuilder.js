@@ -17,6 +17,7 @@ var isFunction = require('./helpers').isFunction;
 var spreadify = require('./helpers').spreadify;
 var TextTools = require('./textTools');
 var StyleContextStack = require('./styleContextStack');
+var bidi = require("./twitter-cldr/bidi");
 
 function addAll(target, otherArray) {
 	otherArray.forEach(function (item) {
@@ -394,7 +395,7 @@ function transformLineForRtl(line, styleStack, textTools) {
 		// Run the line as a string through the BIDI algorithm
 		// This will resolve the ordering of the words in the sentence
 		// but will flip the characters in each RTL word.
-		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL" });
+		var bidiString = bidi.from_string(lineElementsAsString, { "direction": "RTL" });
 		bidiString.reorder_visually();
 
 		// With the line in the correct order, we need to resolve the
@@ -417,7 +418,7 @@ function transformLineForRtl(line, styleStack, textTools) {
 			// Get current word as a string
 			var groupString = spreadify(String.fromCharCode, String)(arrayOfCodePoints[groupIndex]);
 			// Run the word through BIDI to reorder the characters
-			var bidiWord = window.TwitterCldr.Bidi.from_string(groupString, { "direction": "RTL" });
+			var bidiWord = bidi.from_string(groupString, { "direction": "RTL" });
 			bidiWord.reorder_visually();
 
 			// Push the word to what will be the final line array
