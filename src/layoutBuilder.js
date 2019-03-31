@@ -384,11 +384,14 @@ function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
  * @param {object} line the line to be rendered in the PDF that requires transforming
  * @param {object} styleStack the styles to be applied to the text in the line
  * @param {object} textTools contains various utilities for building parts of the PDF
+ * @param {object} textNode original node object representing the current paragraph
  */
-function transformLineForRtl(line, styleStack, textTools) {
+function transformLineForRtl(line, styleStack, textTools, textNode) {
+	var inlinesBeforeTransformation = line.inlines;
+
 		// Extract each word (aka inline) from the line and string it together
 		// to form the line as a string
-		var lineElementsAsString = line.inlines.map(function(element) {
+		var lineElementsAsString = inlinesBeforeTransformation.map(function(element) {
 			return element.text;
 		}).join("");
 		
@@ -425,15 +428,33 @@ function transformLineForRtl(line, styleStack, textTools) {
 			arrayOfTransformedWords.push(bidiWord.toString());
 		}
 
-		// Pass the transformed words, as a single string, through the buildInlines utility
-		var updatedInlines = textTools.buildInlines([{ text: arrayOfTransformedWords.join("")}], styleStack);
+		// Pass the transformed words, as a single string, through the buildInlines utility.
+		// Include original styling of the node as a whole e.g. if the whole body of text is bold
+		// then make sure this gets passed through.
+		var updatedInlines = textTools.buildInlines([{ text: arrayOfTransformedWords.join(""), style: textNode.style}], styleStack);
 
 		// Wipe the existing words (inlines) from this line ...
 		line.inlines = [];
 
 		// ... and replace them with our new BIDI-ified, reversed inlines
-		updatedInlines.items.forEach(function(inline) {
-			return line.addInline(inline);
+		updatedInlines.items.forEach(function(inline, index) {
+			// Where the BIDI algorithm has appropriately transformed the content
+			// we can be confident that the postions of the words have been reversed.
+			// For example, a word that was at position 0 prior to the transformation will
+			// now likely be at the end of the array. This gives us a way of extracting the
+			// styling for each word before it was transformed and apply it to the
+			// transformed word.
+
+			// TODO I don't know how this will stack up again LTR words. Will need
+			// to evaluate once we have mixed fonts support.
+			var oldInline = inlinesBeforeTransformation[inlinesBeforeTransformation.length - 1 - index];
+			var newInline = inline;
+			newInline.style = oldInline.style;
+			newInline.background = oldInline.background;
+			newInline.font = oldInline.font;
+			newInline.decoration = oldInline.decoration;
+			newInline.decorationColor = oldInline.decorationColor;
+			return line.addInline(newInline);
 		});
 }
 
@@ -810,7 +831,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
 
-		transformLineForRtl(line, styleStack, textTools);
+		transformLineForRtl(line, styleStack, textTools, textNode);
 	}
 
 	line.lastLineInParagraph = textNode._inlines.length === 0;
