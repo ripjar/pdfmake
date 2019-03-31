@@ -15,7 +15,6 @@ var offsetVector = require('./helpers').offsetVector;
 var fontStringify = require('./helpers').fontStringify;
 var isFunction = require('./helpers').isFunction;
 var spreadify = require('./helpers').spreadify;
-var fixedCharCodeAt = require('./helpers').fixedCharCodeAt;
 var TextTools = require('./textTools');
 var StyleContextStack = require('./styleContextStack');
 
