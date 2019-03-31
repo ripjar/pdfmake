@@ -341,6 +341,107 @@ function decorateNode(node) {
 	};
 }
 
+/**
+ * Takes an array of codepoints and returns that array grouped by words.
+ * @param {string} lineAsArrayOfCodepoints a line to be rendered to the PDF as an array of codepoints
+ */
+function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
+	// 1. Cut bidiString..string_arr by the number 32 (space)
+		// Contains the codepoints for each word in the line.
+		var arrayOfCodePoints = [];
+
+		// The word being extracted in the form of codepoints from the 
+		// transformed line.
+		var currentWord = [];
+
+		// Loop over each codepoint in the transformed line and extract the words
+		// as codepoints.
+		for (var index = 0; index < lineAsArrayOfCodepoints.length; index++) {
+			// if we encounter a space and this is not the first codepoint
+			if (lineAsArrayOfCodepoints[index] === 32 && currentWord.length) {
+				arrayOfCodePoints.push(currentWord);
+				currentWord = [];
+				// Spaces are leading in RTL so prepending them to the "next" word
+				// preserves the integrity of the RTL string.
+				currentWord.push(lineAsArrayOfCodepoints[index]);
+			// if this is the last character
+			} else if (index + 1 === lineAsArrayOfCodepoints.length) {
+				currentWord.push(lineAsArrayOfCodepoints[index]);
+				arrayOfCodePoints.push(currentWord);
+				currentWord = [];
+			} else {
+				currentWord.push(lineAsArrayOfCodepoints[index]);
+			}
+		}
+}
+
+/**
+ * Takes a line of input containing RTL text, runs it through a BIDI algorithm
+ * to correctly the order the line and then re-runs each word through the BIDI
+ * algorithm to ensure characters appear in the correct direction.
+ * @param {object} line the line to be rendered in the PDF that requires transforming
+ * @param {object} textNode the original node representing the text being transformed
+ * @param {function} buildInlinesFn produces the objects that represent individual words
+ */
+function transformLineForRtl(line, textNode, buildInlinesFn) {
+		// Extract each word (aka inline) from the line and string it together
+		// to form the line as a string
+		var lineElementsAsString = line.inlines.map(function(element) {
+			return element.text;
+		}).join("");
+
+				
+		// The styleStack tells the buildInlines utility how to style
+		// each inline.
+		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
+		styleStack.push(textNode);
+		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
+		
+		// Run the line as a string through the BIDI algorithm
+		// This will resolve the ordering of the words in the sentence
+		// but will flip the characters in each RTL word.
+		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL" });
+		bidiString.reorder_visually();
+
+		// With the line in the correct order, we need to resolve the
+		// individual RTL words as they will be reversed at the character
+		// level.
+
+		// Contains the codepoints for each word in the line.
+		var arrayOfCodePoints = convertWordsToCodepoints(bidiString.string_arr);
+
+		// Contains the strings for each word in the line.
+		var arrayOfTransformedWords = [];
+
+		// With the line converted to an array of words, with the words represented as
+		// codepoints, the words must be individually re-run through the BIDI algorithm
+		// to reverse the characters in each RTL (as the initial BIDI process reverses each
+		// character in the RTL words).
+
+		// Pass the codepoints for each word through String.fromCharCode 
+		for (var groupIndex =  0; groupIndex < arrayOfCodePoints.length; groupIndex++) {
+			// Get current word as a string
+			var groupString = spreadify(String.fromCharCode, String)(arrayOfCodePoints[groupIndex]);
+			// Run the word through BIDI to reorder the characters
+			var bidiWord = window.TwitterCldr.Bidi.from_string(groupString, { "direction": "RTL" });
+			bidiWord.reorder_visually();
+
+			// Push the word to what will be the final line array
+			arrayOfTransformedWords.push(bidiWord.toString());
+		}
+
+		// Pass the transformed words, as a single string, through the buildInlines utility
+		var updatedInlines = buildInlinesFn([{ text: arrayOfTransformedWords.join("")}], styleStack);
+
+		// Wipe the existing words (inlines) from this line ...
+		line.inlines = [];
+
+		// ... and replace them with our new BIDI-ified, reversed inlines
+		updatedInlines.items.forEach(function(inline) {
+			return line.addInline(inline);
+		});
+}
+
 LayoutBuilder.prototype.processNode = function (node) {
 	var self = this;
 
@@ -705,64 +806,10 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		isForceContinue = inline.noNewLine && !isHardWrap;
 	}
 
+	// RTL text has to be transformed before being rendered to the PDF
+	// to ensure the validity of the output.
 	if (textNode.rtl) {
-		// 1.Extract the text from each `inline` element
-		// 2. String the text together
-		var lineElementsAsString = line.inlines.map(function(element) {
-			return element.text;
-		}).join("");
-		
-		// 3. Apply the text through the BIDI algorithm
-		var bidiString = window.TwitterCldr.Bidi.from_string(lineElementsAsString, { "direction": "RTL", default_direction: "RTL" });
-		var styleStack = new StyleContextStack(this.styleDictionary, this.defaultStyle);
-		bidiString.reorder_visually();
-
-		var codepoints = [];
-		for(var i = 0; i < lineElementsAsString.length; i++) {
-			codepoints.push(fixedCharCodeAt(lineElementsAsString, i));
-		}
-
-		styleStack.push(textNode);
-		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
-
-		// 1. Cut bidiString..string_arr by the number 32 (space)
-		// 2. Loop over each group of code points.
-		// 3. Convert the group to a string
-		// 4. Run it through the algorithm
-		// 5. Stich the string together and run it through buildInlines
-
-		var arrayOfCodePoints = [];
-		var arrayOfStrings = [];
-		var currentGroup = [];
-		for (var index = 0; index < bidiString.string_arr.length; index++) {
-			// if we encounter a space and this is not the first codepoint
-			if (bidiString.string_arr[index] === 32 && currentGroup.length) {
-				arrayOfCodePoints.push(currentGroup);
-				currentGroup = [];
-				currentGroup.push(bidiString.string_arr[index]);
-			// if this is the last character
-			} else if (index + 1 === bidiString.string_arr.length) {
-				currentGroup.push(bidiString.string_arr[index]);
-				arrayOfCodePoints.push(currentGroup);
-				currentGroup = [];
-			} else {
-				currentGroup.push(bidiString.string_arr[index]);
-			}
-		}
-
-		for (var groupIndex =  0; groupIndex < arrayOfCodePoints.length; groupIndex++) {
-			var groupString = spreadify(String.fromCharCode, String)(arrayOfCodePoints[groupIndex]);
-			var testString = window.TwitterCldr.Bidi.from_string(groupString, { "direction": "RTL" });
-			testString.reorder_visually();
-			arrayOfStrings.push(testString.toString());
-		}
-
-		var updatedInlines = textTools.buildInlines([{ text: arrayOfStrings.join("")}], styleStack);
-
-		line.inlines = [];
-		updatedInlines.items.forEach(function(ul) {
-			return line.addInline(ul);
-		});
+		transformLineForRtl(line, textNode, textTools.buildInlines);
 	}
 
 	line.lastLineInParagraph = textNode._inlines.length === 0;
