@@ -60628,7 +60628,6 @@ function decorateNode(node) {
  * @param {string} lineAsArrayOfCodepoints a line to be rendered to the PDF as an array of codepoints
  */
 function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
-	// 1. Cut bidiString..string_arr by the number 32 (space)
 		// Contains the codepoints for each word in the line.
 		var arrayOfCodePoints = [];
 
