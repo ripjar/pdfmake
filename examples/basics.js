@@ -17,6 +17,9 @@ var PdfPrinter = require("../src/printer");
 var printer = new PdfPrinter(fonts);
 var fs = require("fs");
 
+const shortArabic = "ثلاث كلمات في "; // <<<--- needs space at the end
+var mediumArabic = "ستكون هذه جملة عربية معقولة";
+
 var RLE = String.fromCodePoint();
 
 var docDefinition = {
@@ -25,16 +28,15 @@ var docDefinition = {
 			text: [
 				{ text: "First paragraph " },
 				{ text: "some arabic next " },
-				{ text: "ثلاث كلمات في ", font: "NotoSansArabic", rtl: true },
-				" Another paragraph, this time a little bit longer to make sure, this line will be divided into at least two lines",
 				{
-					stack: [{ text: "ثلاث كلمات في ", font: "NotoSansArabic" }],
-					rtl: true,
+					text: "adding some longer sections to figure out how it breaks lines",
 				},
+				{ text: shortArabic, font: "NotoSansArabic", inlineRtl: true },
+				" followed by english",
 			],
 		},
 		{
-			text: "ثلاث كلمات في ",
+			text: shortArabic,
 			font: "NotoSansArabic",
 			rtl: true,
 		},
