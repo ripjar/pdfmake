@@ -943,8 +943,26 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 	var textTools = new TextTools(this.fontProvider);
 
 	var isForceContinue = false;
-	var isRtl = false;
-	console.log(textNode);
+
+	const isNested = Array.isArray(textNode.text);
+	// go through the inlines and manually add isInline: true where required
+	// TODO move this code somewhere earlier in the inline build process
+
+	// only for nested arrays, and only if there's any inline RTL
+	// manually append the inlineRtl property (temporary, should move to wherever)
+	// ._inlines is generated
+	if (isNested) {
+		const rtlString = textNode.text
+			.filter((inline) => inline.inlineRtl)
+			.map((inline) => inline.text)
+			.join(" ");
+
+		if (rtlString.length > 0) {
+			textNode._inlines.forEach((inline) => {
+				inline.inlineRtl = rtlString.includes(inline.text);
+			});
+		}
+	}
 
 	while (
 		textNode._inlines &&
@@ -1002,7 +1020,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
-	if (true) {
+	if (textNode.rtl) {
 		// The styleStack tells the buildInlines utility how to style
 		// each inline.
 		var styleStack = new StyleContextStack(
