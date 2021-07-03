@@ -582,6 +582,43 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	});
 }
 
+function transformLineWithInlineRtl(line, styleStack, textTools, textNode) {
+	const inlinesBeforeTransformation = line.inlines;
+	console.log(
+		inlinesBeforeTransformation.map((inline) => ({ text: inline.text }))
+	);
+
+	// here instead of doing the job-lot, we only want to do inlines that have inlineRtl
+	// this is being passed a LINE so could have multiple chunks of inlineRTL in that mofo
+	const rtlChunks = [];
+	let start = null;
+	for (let i = 0; i < inlinesBeforeTransformation.length; i++) {
+		if (inlinesBeforeTransformation[i].inlineRtl && !start) {
+			start = i;
+		} else if (start !== null && !inlinesBeforeTransformation[i].inlineRtl) {
+			rtlChunks.push(inlinesBeforeTransformation.slice(start, i));
+			start = null;
+		} else if (start !== null && i === inlinesBeforeTransformation.length - 1) {
+			rtlChunks.push(inlinesBeforeTransformation.slice(start));
+		}
+	}
+	console.log(rtlChunks);
+	// const lineElementsAsString = inlinesBeforeTransformation
+	// 	.map((inline) => inline.text)
+	// 	.join("");
+
+	// const bidiString = bidi.from_string(lineElementsAsString);
+	// bidiString.reorder_visually();
+
+	// // the bidiString.string_arr is an array of codepoints, each representing a single char
+	// // calling this function returns an array (the line) of arrays(the individual words) containing
+	// // codepoints(the letters) but the
+	// console.log(bidiString);
+	// const arrayOfCodePoints = convertWordsToCodepoints(bidiString.string_arr);
+	// console.log(arrayOfCodePoints);
+	// const arrayOfTransformedWords = [];
+}
+
 LayoutBuilder.prototype.processNode = function (node) {
 	var self = this;
 
@@ -951,6 +988,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 	// only for nested arrays, and only if there's any inline RTL
 	// manually append the inlineRtl property (temporary, should move to wherever)
 	// ._inlines is generated
+	let containsInlineRtl = false;
 	if (isNested) {
 		const rtlString = textNode.text
 			.filter((inline) => inline.inlineRtl)
@@ -958,6 +996,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			.join(" ");
 
 		if (rtlString.length > 0) {
+			containsInlineRtl = true;
 			textNode._inlines.forEach((inline) => {
 				inline.inlineRtl = rtlString.includes(inline.text);
 			});
@@ -1018,6 +1057,15 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		isForceContinue = inline.noNewLine && !isHardWrap;
 	}
 
+	if (containsInlineRtl) {
+		// TODO figure out what this is doing. Think it's fine, just adding text styles A/R
+		const styleStack = new StyleContextStack(
+			this.styleDictionary,
+			this.defaultStyle
+		);
+		styleStack.push(textNode);
+		transformLineWithInlineRtl(line, styleStack, textTools, textNode);
+	}
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
 	if (textNode.rtl) {
