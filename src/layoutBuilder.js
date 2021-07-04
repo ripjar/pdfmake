@@ -582,24 +582,37 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	});
 }
 
-LayoutBuilder.prototype.transformLineWithInlineRtl = function (
+/**
+ * Takes the inlines from the current line. Reorders the inlines using BIDI.
+ * @param {*} line
+ * @param {*} styleStack
+ * @param {*} textTools
+ * @param {*} textNode
+ * @returns
+ */
+LayoutBuilder.prototype.addLineWithInlineRTL = function (
 	line,
 	styleStack,
 	textTools,
 	textNode
 ) {
-	// try bidifying the whole line as one
-	const inlinesBeforeTransformation = line.inlines;
+	// Turn the inlines into a single string
+	const lineElementsAsString = line.inlines.map((e) => e.text).join("");
 
-	const lineElementsAsString = inlinesBeforeTransformation
-		.map((e) => e.text)
-		.join("");
-
+	// Use that string to create a bidi instance
 	const bidiString = bidi.from_string(lineElementsAsString).reorder_visually();
-	const arrayOfCodePoints = convertWordsToCodepoints(bidiString.string_arr);
+
+	// The bidi instance contains string_arr, which is the original string represented
+	// by a single array of codepoints. Call convertWordsToCodepoints in order to
+	// get back an array (representing the line) of arrays (representing the words) of
+	// codepoints (representing the individual characters)
+	const wordsAsArraysOfCodePoints = convertWordsToCodepoints(
+		bidiString.string_arr
+	);
 	const arrayOfTransformedWords = [];
 
-	arrayOfCodePoints.forEach((wordAsCodePoints) => {
+	// Copied from transformLineForRtl, this fills our arrayOfTransformedWords
+	wordsAsArraysOfCodePoints.forEach((wordAsCodePoints) => {
 		const wordAsString = spreadify(
 			String.fromCharCode,
 			String
@@ -608,12 +621,16 @@ LayoutBuilder.prototype.transformLineWithInlineRtl = function (
 		arrayOfTransformedWords.push(bidiWord.toString());
 	});
 
+	// Using this arrayOfTransformedWords, we need to rebuild the inlines,
+	// passing through the textNode original style
 	const updatedInlines = textTools.buildInlines(
 		[{ text: arrayOfTransformedWords.join(""), style: textNode.style }],
 		styleStack
 	);
 
-	// don't mutate the inlines array, make a new line and insert that instead
+	// Unlike transformLineForRtl we need to build a new line here and then
+	// add each inline in turn. We know it will fit, because that check has been
+	// carried out already by buildNextLine.
 	const newLine = new Line(this.writer.context().availableWidth);
 	updatedInlines.items.forEach((newInline) => newLine.addInline(newInline));
 	return newLine;
@@ -1066,12 +1083,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic" });
 
-		return this.transformLineWithInlineRtl(
-			line,
-			styleStack,
-			textTools,
-			textNode
-		);
+		return this.addLineWithInlineRTL(line, styleStack, textTools, textNode);
 	}
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
