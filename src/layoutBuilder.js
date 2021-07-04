@@ -998,27 +998,13 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 
 	var isForceContinue = false;
 
-	const isNested = Array.isArray(textNode.text);
-	// go through the inlines and manually add isInline: true where required
-	// TODO move this code somewhere earlier in the inline build process
-
-	// only for nested arrays, and only if there's any inline RTL
-	// manually append the inlineRtl property (temporary, should move to wherever)
-	// ._inlines is generated
-	let containsInlineRtl = false;
-	if (isNested) {
-		const rtlString = textNode.text
-			.filter((inline) => inline.inlineRtl)
-			.map((inline) => inline.text)
-			.join(" ");
-
-		if (rtlString.length > 0) {
-			containsInlineRtl = true;
-			textNode._inlines.forEach((inline) => {
-				inline.inlineRtl = rtlString.includes(inline.text);
-			});
-		}
-	}
+	// The textNodes.text property can be a string or an array, depending on
+	// the input to pdfMake. As the inlineRtl flag is designed to deal with the
+	// cases where array input is used, we need to check if we have an array and
+	// if so, whether it contains any inlineRtl
+	const inputIsArray = Array.isArray(textNode.text);
+	const containsInlineRtl =
+		inputIsArray && textNode.text.some((inline) => inline.inlineRtl);
 
 	while (
 		textNode._inlines &&
