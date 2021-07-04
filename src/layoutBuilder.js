@@ -583,18 +583,21 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 }
 
 /**
- * Takes the inlines from the current line. Reorders the inlines using BIDI.
- * @param {*} line
- * @param {*} styleStack
- * @param {*} textTools
- * @param {*} textNode
- * @returns
+ * Takes the inlines from the current line. Reorders the inlines using BIDI. After reordering
+ * the inlines it uses them to make a new line and returns that line
+ * @param {Line} line The original line that contains some inline RTL
+ * @param {StyleContextStack} styleStack The style context used when rebuilding the inlines
+ * @param {TextTools} textTools Used to rebuild the inlines
+ * @param {Object} textNode The original textNode that contains the nested inline rtl text
+ * @param {Number} availableWidth the line width being used
+ * @returns {Line}
  */
-LayoutBuilder.prototype.addLineWithInlineRTL = function (
+function addLineWithInlineRTL(
 	line,
 	styleStack,
 	textTools,
-	textNode
+	textNode,
+	availableWidth
 ) {
 	// Turn the inlines into a single string
 	const lineElementsAsString = line.inlines.map((e) => e.text).join("");
@@ -631,10 +634,10 @@ LayoutBuilder.prototype.addLineWithInlineRTL = function (
 	// Unlike transformLineForRtl we need to build a new line here and then
 	// add each inline in turn. We know it will fit, because that check has been
 	// carried out already by buildNextLine.
-	const newLine = new Line(this.writer.context().availableWidth);
+	const newLine = new Line(availableWidth);
 	updatedInlines.items.forEach((newInline) => newLine.addInline(newInline));
 	return newLine;
-};
+}
 
 LayoutBuilder.prototype.processNode = function (node) {
 	var self = this;
@@ -1070,8 +1073,15 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		);
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic" });
+		const availableWidth = this.writer.context().availableWidth;
 
-		return this.addLineWithInlineRTL(line, styleStack, textTools, textNode);
+		return addLineWithInlineRTL(
+			line,
+			styleStack,
+			textTools,
+			textNode,
+			availableWidth
+		);
 	}
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
