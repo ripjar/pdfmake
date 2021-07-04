@@ -26,11 +26,7 @@ var docDefinition = {
 	content: [
 		{
 			text: [
-				{ text: "First paragraph " },
-				{ text: "some arabic next " },
-				{
-					text: "adding some longer sections to figure out how it breaks lines",
-				},
+				{ text: "Short phrase " },
 				{ text: shortArabic, font: "NotoSansArabic", inlineRtl: true },
 				" followed by english",
 			],

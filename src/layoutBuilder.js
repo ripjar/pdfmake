@@ -582,7 +582,12 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	});
 }
 
-function transformLineWithInlineRtl(line, styleStack, textTools, textNode) {
+LayoutBuilder.prototype.transformLineWithInlineRtl = function (
+	line,
+	styleStack,
+	textTools,
+	textNode
+) {
 	// try bidifying the whole line as one
 	const inlinesBeforeTransformation = line.inlines;
 
@@ -607,11 +612,12 @@ function transformLineWithInlineRtl(line, styleStack, textTools, textNode) {
 		[{ text: arrayOfTransformedWords.join(""), style: textNode.style }],
 		styleStack
 	);
-	console.log(updatedInlines);
 
-	line.inlines = [];
-	updatedInlines.items.forEach((newInline) => line.addInline(newInline));
-}
+	// don't mutate the inlines array, make a new line and insert that instead
+	const newLine = new Line(this.writer.context().availableWidth);
+	updatedInlines.items.forEach((newInline) => newLine.addInline(newInline));
+	return newLine;
+};
 
 LayoutBuilder.prototype.processNode = function (node) {
 	var self = this;
@@ -1060,7 +1066,12 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		styleStack.push(textNode);
 		styleStack.push({ font: "NotoSansArabic" });
 
-		transformLineWithInlineRtl(line, styleStack, textTools, textNode);
+		return this.transformLineWithInlineRtl(
+			line,
+			styleStack,
+			textTools,
+			textNode
+		);
 	}
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
