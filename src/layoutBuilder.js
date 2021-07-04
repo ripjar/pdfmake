@@ -583,40 +583,34 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 }
 
 function transformLineWithInlineRtl(line, styleStack, textTools, textNode) {
+	// try bidifying the whole line as one
 	const inlinesBeforeTransformation = line.inlines;
-	console.log(
-		inlinesBeforeTransformation.map((inline) => ({ text: inline.text }))
+
+	const lineElementsAsString = inlinesBeforeTransformation
+		.map((e) => e.text)
+		.join("");
+
+	const bidiString = bidi.from_string(lineElementsAsString).reorder_visually();
+	const arrayOfCodePoints = convertWordsToCodepoints(bidiString.string_arr);
+	const arrayOfTransformedWords = [];
+
+	arrayOfCodePoints.forEach((wordAsCodePoints) => {
+		const wordAsString = spreadify(
+			String.fromCharCode,
+			String
+		)(wordAsCodePoints);
+		const bidiWord = bidi.from_string(wordAsString).reorder_visually();
+		arrayOfTransformedWords.push(bidiWord.toString());
+	});
+
+	const updatedInlines = textTools.buildInlines(
+		[{ text: arrayOfTransformedWords.join(""), style: textNode.style }],
+		styleStack
 	);
+	console.log(updatedInlines);
 
-	// here instead of doing the job-lot, we only want to do inlines that have inlineRtl
-	// this is being passed a LINE so could have multiple chunks of inlineRTL in that mofo
-	const rtlChunks = [];
-	let start = null;
-	for (let i = 0; i < inlinesBeforeTransformation.length; i++) {
-		if (inlinesBeforeTransformation[i].inlineRtl && !start) {
-			start = i;
-		} else if (start !== null && !inlinesBeforeTransformation[i].inlineRtl) {
-			rtlChunks.push(inlinesBeforeTransformation.slice(start, i));
-			start = null;
-		} else if (start !== null && i === inlinesBeforeTransformation.length - 1) {
-			rtlChunks.push(inlinesBeforeTransformation.slice(start));
-		}
-	}
-	console.log(rtlChunks);
-	// const lineElementsAsString = inlinesBeforeTransformation
-	// 	.map((inline) => inline.text)
-	// 	.join("");
-
-	// const bidiString = bidi.from_string(lineElementsAsString);
-	// bidiString.reorder_visually();
-
-	// // the bidiString.string_arr is an array of codepoints, each representing a single char
-	// // calling this function returns an array (the line) of arrays(the individual words) containing
-	// // codepoints(the letters) but the
-	// console.log(bidiString);
-	// const arrayOfCodePoints = convertWordsToCodepoints(bidiString.string_arr);
-	// console.log(arrayOfCodePoints);
-	// const arrayOfTransformedWords = [];
+	line.inlines = [];
+	updatedInlines.items.forEach((newInline) => line.addInline(newInline));
 }
 
 LayoutBuilder.prototype.processNode = function (node) {
@@ -1064,6 +1058,8 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			this.defaultStyle
 		);
 		styleStack.push(textNode);
+		styleStack.push({ font: "NotoSansArabic" });
+
 		transformLineWithInlineRtl(line, styleStack, textTools, textNode);
 	}
 	// RTL text has to be transformed before being rendered to the PDF
