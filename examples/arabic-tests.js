@@ -46,5 +46,5 @@ var docDefinition = {
 };
 
 var pdfDoc = printer.createPdfKitDocument(docDefinition);
-pdfDoc.pipe(fs.createWriteStream("examples/pdfs/basics.pdf"));
+pdfDoc.pipe(fs.createWriteStream("examples/pdfs/arabic-tests.pdf"));
 pdfDoc.end();
