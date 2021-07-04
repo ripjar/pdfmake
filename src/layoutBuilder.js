@@ -1,23 +1,23 @@
-"use strict";
+'use strict';
 
-var TraversalTracker = require("./traversalTracker");
-var DocPreprocessor = require("./docPreprocessor");
-var DocMeasure = require("./docMeasure");
-var DocumentContext = require("./documentContext");
-var PageElementWriter = require("./pageElementWriter");
-var ColumnCalculator = require("./columnCalculator");
-var TableProcessor = require("./tableProcessor");
-var Line = require("./line");
-var isString = require("./helpers").isString;
-var isArray = require("./helpers").isArray;
-var pack = require("./helpers").pack;
-var offsetVector = require("./helpers").offsetVector;
-var fontStringify = require("./helpers").fontStringify;
-var isFunction = require("./helpers").isFunction;
-var spreadify = require("./helpers").spreadify;
-var TextTools = require("./textTools");
-var StyleContextStack = require("./styleContextStack");
-var bidi = require("./twitter-cldr/bidi");
+var TraversalTracker = require('./traversalTracker');
+var DocPreprocessor = require('./docPreprocessor');
+var DocMeasure = require('./docMeasure');
+var DocumentContext = require('./documentContext');
+var PageElementWriter = require('./pageElementWriter');
+var ColumnCalculator = require('./columnCalculator');
+var TableProcessor = require('./tableProcessor');
+var Line = require('./line');
+var isString = require('./helpers').isString;
+var isArray = require('./helpers').isArray;
+var pack = require('./helpers').pack;
+var offsetVector = require('./helpers').offsetVector;
+var fontStringify = require('./helpers').fontStringify;
+var isFunction = require('./helpers').isFunction;
+var spreadify = require('./helpers').spreadify;
+var TextTools = require('./textTools');
+var StyleContextStack = require('./styleContextStack');
+var bidi = require('./twitter-cldr/bidi');
 
 function addAll(target, otherArray) {
 	otherArray.forEach(function (item) {
@@ -79,21 +79,21 @@ LayoutBuilder.prototype.layoutDocument = function (
 		linearNodeList.forEach(function (node) {
 			var nodeInfo = {};
 			[
-				"id",
-				"text",
-				"ul",
-				"ol",
-				"table",
-				"image",
-				"qr",
-				"canvas",
-				"columns",
-				"headlineLevel",
-				"style",
-				"pageBreak",
-				"pageOrientation",
-				"width",
-				"height",
+				'id',
+				'text',
+				'ul',
+				'ol',
+				'table',
+				'image',
+				'qr',
+				'canvas',
+				'columns',
+				'headlineLevel',
+				'style',
+				'pageBreak',
+				'pageOrientation',
+				'width',
+				'height',
 			].forEach(function (key) {
 				if (node[key] !== undefined) {
 					nodeInfo[key] = node[key];
@@ -114,7 +114,7 @@ LayoutBuilder.prototype.layoutDocument = function (
 		});
 
 		return linearNodeList.some(function (node, index, followingNodeList) {
-			if (node.pageBreak !== "before" && !node.pageBreakCalculated) {
+			if (node.pageBreak !== 'before' && !node.pageBreakCalculated) {
 				node.pageBreakCalculated = true;
 				var pageNumber = node.nodeInfo.pageNumbers[0];
 
@@ -150,7 +150,7 @@ LayoutBuilder.prototype.layoutDocument = function (
 						})
 					)
 				) {
-					node.pageBreak = "before";
+					node.pageBreak = 'before';
 					return true;
 				}
 			}
@@ -226,7 +226,7 @@ LayoutBuilder.prototype.tryLayoutDocument = function (
 	);
 
 	var _this = this;
-	this.writer.context().tracker.startTracking("pageAdded", function () {
+	this.writer.context().tracker.startTracking('pageAdded', function () {
 		_this.addBackground(background);
 	});
 
@@ -347,8 +347,8 @@ LayoutBuilder.prototype.addWatermark = function (
 		return;
 	}
 
-	watermark.font = watermark.font || defaultStyle.font || "Roboto";
-	watermark.color = watermark.color || "black";
+	watermark.font = watermark.font || defaultStyle.font || 'Roboto';
+	watermark.color = watermark.color || 'black';
 	watermark.opacity = watermark.opacity || 0.6;
 	watermark.bold = watermark.bold || false;
 	watermark.italics = watermark.italics || false;
@@ -467,7 +467,7 @@ function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
 		if (lineAsArrayOfCodepoints[index] === 32 && currentWord.length) {
 			arrayOfCodePoints.push(currentWord);
 			currentWord = [];
-			// Spaces are leading in RTL so prepending them to the "next" word
+			// Spaces are leading in RTL so prepending them to the 'next' word
 			// preserves the integrity of the RTL string.
 			currentWord.push(lineAsArrayOfCodepoints[index]);
 			// if this is the last character
@@ -501,12 +501,12 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 		.map(function (element) {
 			return element.text;
 		})
-		.join("");
+		.join('');
 
 	// Run the line as a string through the BIDI algorithm
 	// This will resolve the ordering of the words in the sentence
 	// but will flip the characters in each RTL word.
-	var bidiString = bidi.from_string(lineElementsAsString, { direction: "RTL" });
+	var bidiString = bidi.from_string(lineElementsAsString, { direction: 'RTL' });
 	bidiString.reorder_visually();
 
 	// With the line in the correct order, we need to resolve the
@@ -536,7 +536,7 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 			String
 		)(arrayOfCodePoints[groupIndex]);
 		// Run the word through BIDI to reorder the characters
-		var bidiWord = bidi.from_string(groupString, { direction: "RTL" });
+		var bidiWord = bidi.from_string(groupString, { direction: 'RTL' });
 		bidiWord.reorder_visually();
 
 		// Push the word to what will be the final line array
@@ -547,7 +547,7 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	// Include original styling of the node as a whole e.g. if the whole body of text is bold
 	// then make sure this gets passed through.
 	var updatedInlines = textTools.buildInlines(
-		[{ text: arrayOfTransformedWords.join(""), style: textNode.style }],
+		[{ text: arrayOfTransformedWords.join(''), style: textNode.style }],
 		styleStack
 	);
 
@@ -599,7 +599,7 @@ function addLineWithInlineRTL(
 	availableWidth
 ) {
 	// Turn the inlines into a single string
-	const lineElementsAsString = line.inlines.map((e) => e.text).join("");
+	const lineElementsAsString = line.inlines.map((e) => e.text).join('');
 
 	// Use that string to create a bidi instance
 	const bidiString = bidi.from_string(lineElementsAsString).reorder_visually();
@@ -626,7 +626,7 @@ function addLineWithInlineRTL(
 	// Using this arrayOfTransformedWords, we need to rebuild the inlines,
 	// passing through the textNode original style
 	const updatedInlines = textTools.buildInlines(
-		[{ text: arrayOfTransformedWords.join(""), style: textNode.style }],
+		[{ text: arrayOfTransformedWords.join(''), style: textNode.style }],
 		styleStack
 	);
 
@@ -689,7 +689,7 @@ LayoutBuilder.prototype.processNode = function (node) {
 			self.processQr(node);
 		} else if (!node._span) {
 			throw (
-				"Unrecognized document structure: " +
+				'Unrecognized document structure: ' +
 				JSON.stringify(node, fontStringify)
 			);
 		}
@@ -706,7 +706,7 @@ LayoutBuilder.prototype.processNode = function (node) {
 	function applyMargins(callback) {
 		var margin = node._margin;
 
-		if (node.pageBreak === "before") {
+		if (node.pageBreak === 'before') {
 			self.writer.moveToNextPage(node.pageOrientation);
 		}
 
@@ -722,7 +722,7 @@ LayoutBuilder.prototype.processNode = function (node) {
 			self.writer.context().moveDown(margin[3]);
 		}
 
-		if (node.pageBreak === "after") {
+		if (node.pageBreak === 'after') {
 			self.writer.moveToNextPage(node.pageOrientation);
 		}
 	}
@@ -781,7 +781,7 @@ LayoutBuilder.prototype.processRow = function (
 	var pageBreaks = [],
 		positions = [];
 
-	this.tracker.auto("pageChanged", storePageBreakData, function () {
+	this.tracker.auto('pageChanged', storePageBreakData, function () {
 		widths = widths || columns;
 
 		self.writer.context().beginColumnGroup();
@@ -845,9 +845,9 @@ LayoutBuilder.prototype.processRow = function (
 			var endingRow = tableRow + column.rowSpan - 1;
 			if (endingRow >= tableBody.length) {
 				throw (
-					"Row span for column " +
+					'Row span for column ' +
 					columnIndex +
-					" (with indexes starting from 0) exceeded row count"
+					' (with indexes starting from 0) exceeded row count'
 				);
 			}
 			return tableBody[endingRow][columnIndex];
@@ -866,7 +866,7 @@ LayoutBuilder.prototype.processList = function (orderedList, node) {
 	this.writer.context().addMargin(gapSize.width);
 
 	var nextMarker;
-	this.tracker.auto("lineAdded", addMarkerToFirstLeaf, function () {
+	this.tracker.auto('lineAdded', addMarkerToFirstLeaf, function () {
 		items.forEach(function (item) {
 			nextMarker = item.listMarker;
 			self.processNode(item);
@@ -919,7 +919,7 @@ LayoutBuilder.prototype.processTable = function (tableNode) {
 			height = rowHeights;
 		}
 
-		if (height === "auto") {
+		if (height === 'auto') {
 			height = undefined;
 		}
 
@@ -1071,7 +1071,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			this.defaultStyle
 		);
 		styleStack.push(textNode);
-		styleStack.push({ font: "NotoSansArabic" });
+		styleStack.push({ font: 'NotoSansArabic' });
 		const availableWidth = this.writer.context().availableWidth;
 
 		return addLineWithInlineRTL(
@@ -1092,7 +1092,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			this.defaultStyle
 		);
 		styleStack.push(textNode);
-		styleStack.push({ font: "NotoSansArabic", alignment: "right" });
+		styleStack.push({ font: 'NotoSansArabic', alignment: 'right' });
 		transformLineForRtl(line, styleStack, textTools, textNode);
 	}
 
