@@ -1061,7 +1061,9 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 	}
 
 	if (containsInlineRtl) {
-		// TODO figure out what this is doing. Think it's fine, just adding text styles A/R
+		// TODO I think this will need more work to build a style dictionary for each
+		// entry, as we could have multiple fonts contained within a single line which
+		// is not a problem for the other rtl processing function
 		const styleStack = new StyleContextStack(
 			this.styleDictionary,
 			this.defaultStyle
