@@ -1,15 +1,9 @@
 var fonts = {
-	NotoSansArabic: {
-		normal: "examples/fonts/NotoSansEnglishArabic-reg.ttf",
-		bold: "examples/fonts/NotoSansEnglishArabic-Bold.ttf",
-		italics: "examples/fonts/NotoSansEnglishArabic-reg.ttf",
-		bolditalics: "examples/fonts/NotoSansEnglishArabic-Bold.ttf",
-	},
 	Roboto: {
-		normal: "examples/fonts/Roboto-Regular.ttf",
-		bold: "examples/fonts/Roboto-Medium.ttf",
-		italics: "examples/fonts/Roboto-Italic.ttf",
-		bolditalics: "examples/fonts/Roboto-MediumItalic.ttf",
+		normal: "fonts/Roboto-Regular.ttf",
+		bold: "fonts/Roboto-Medium.ttf",
+		italics: "fonts/Roboto-Italic.ttf",
+		bolditalics: "fonts/Roboto-MediumItalic.ttf",
 	},
 };
 
@@ -17,28 +11,13 @@ var PdfPrinter = require("../src/printer");
 var printer = new PdfPrinter(fonts);
 var fs = require("fs");
 
-const shortArabic = "ثلاث كلمات في "; // <<<--- needs space at the end
-var mediumArabic = "ستكون هذه جملة عربية معقولة";
-
-var RLE = String.fromCodePoint();
-
 var docDefinition = {
 	content: [
-		{
-			text: [
-				{ text: "Short phrase " },
-				{ text: shortArabic, font: "NotoSansArabic", inlineRtl: true },
-				" followed by english",
-			],
-		},
-		{
-			text: shortArabic,
-			font: "NotoSansArabic",
-			rtl: true,
-		},
+		"First paragraph",
+		"Another paragraph, this time a little bit longer to make sure, this line will be divided into at least two lines",
 	],
 };
 
 var pdfDoc = printer.createPdfKitDocument(docDefinition);
-pdfDoc.pipe(fs.createWriteStream("examples/pdfs/basics.pdf"));
+pdfDoc.pipe(fs.createWriteStream("pdfs/basics.pdf"));
 pdfDoc.end();
