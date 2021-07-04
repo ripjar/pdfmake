@@ -99,7 +99,8 @@ var docDefinition = {
 		generateTestHeader(
 			"ARABIC-ENGLISH-MIX: inlineRtl FOLLOWED BY rtl (right justified) to allow checking of arabic"
 		),
-		generateTestString("English-Arabic: short"),
+		generateTestHeader("ENGLISH-ARABIC"),
+		generateTestString("Short"),
 		// NB have to manually add end of line spaces here
 		generateInlineRtlTest([
 			[shortEnglish + " ", english],
@@ -107,31 +108,64 @@ var docDefinition = {
 		]),
 		generateRtlTest(shortArabic, arabic),
 		newline(),
-		generateTestString("English-Arabic: medium"),
+		generateTestString("Medium"),
 		generateInlineRtlTest([
 			[mediumEnglish + " ", english],
 			[mediumArabic, arabic],
 		]),
 		generateRtlTest(mediumArabic, arabic),
 		newline(),
-		generateTestString("English-Arabic: long (english line-break)"),
+		generateTestString("Long (english line-break)"),
 		generateInlineRtlTest([
 			[longEnglish + " ", english],
 			[longArabic, arabic],
 		]),
 		generateRtlTest(longArabic, arabic),
 		newline(),
-		generateTestString("English-Arabic: medium-long (arabic line-break)"),
+		generateTestString("Medium-long (arabic line-break)"),
 		generateInlineRtlTest([
 			[mediumEnglish + " ", english],
 			[longArabic, arabic],
 		]),
 		generateRtlTest(longArabic, arabic),
 		newline(),
-		generateTestString("English-Arabic: medium-long (arabic line-break again)"),
+		generateTestString("Medium-long 2 (arabic line-break)"),
 		generateInlineRtlTest([
 			[mediumEnglish + " some nonsense for spacing ", english],
 			[longArabic, arabic],
+		]),
+		generateRtlTest(longArabic, arabic),
+		newline(),
+		generateTestHeader("ARABIC-ENGLISH"),
+		generateTestString("Short"),
+		// NB have to manually add end of line spaces here
+		generateInlineRtlTest([
+			[shortArabic, arabic],
+			[" " + shortEnglish + " ", english],
+		]),
+		generateRtlTest(shortArabic, arabic),
+		newline(),
+		generateTestString("Medium"),
+		generateInlineRtlTest([
+			[mediumArabic, arabic],
+			[" " + mediumEnglish, english],
+		]),
+		generateRtlTest(mediumArabic, arabic),
+		newline(),
+		generateTestString("Long (english line-break)"),
+		generateInlineRtlTest([
+			[longArabic, arabic],
+			[" " + longEnglish, english],
+		]),
+		generateRtlTest(longArabic, arabic),
+		newline(),
+		generateTestString(
+			"Double long (arabic line-break), nb this entire first line reads right to left"
+		),
+		generateInlineRtlTest([
+			[longArabic, arabic],
+			[longArabic, arabic],
+			[" " + mediumEnglish, english],
 		]),
 		generateRtlTest(longArabic, arabic),
 		newline(),
