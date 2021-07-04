@@ -96,6 +96,45 @@ var docDefinition = {
 		generateInlineRtlTest([[longArabicWithNewlines, arabic]]),
 		generateRtlTest(longArabicWithNewlines, arabic),
 		newline(),
+		generateTestHeader(
+			"ARABIC-ENGLISH-MIX: inlineRtl FOLLOWED BY rtl (right justified) to allow checking of arabic"
+		),
+		generateTestString("English-Arabic: short"),
+		// NB have to manually add end of line spaces here
+		generateInlineRtlTest([
+			[shortEnglish + " ", english],
+			[shortArabic, arabic],
+		]),
+		generateRtlTest(shortArabic, arabic),
+		newline(),
+		generateTestString("English-Arabic: medium"),
+		generateInlineRtlTest([
+			[mediumEnglish + " ", english],
+			[mediumArabic, arabic],
+		]),
+		generateRtlTest(mediumArabic, arabic),
+		newline(),
+		generateTestString("English-Arabic: long (english line-break)"),
+		generateInlineRtlTest([
+			[longEnglish + " ", english],
+			[longArabic, arabic],
+		]),
+		generateRtlTest(longArabic, arabic),
+		newline(),
+		generateTestString("English-Arabic: medium-long (arabic line-break)"),
+		generateInlineRtlTest([
+			[mediumEnglish + " ", english],
+			[longArabic, arabic],
+		]),
+		generateRtlTest(longArabic, arabic),
+		newline(),
+		generateTestString("English-Arabic: medium-long (arabic line-break again)"),
+		generateInlineRtlTest([
+			[mediumEnglish + " some nonsense for spacing ", english],
+			[longArabic, arabic],
+		]),
+		generateRtlTest(longArabic, arabic),
+		newline(),
 	],
 };
 
