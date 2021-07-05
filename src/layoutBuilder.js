@@ -629,6 +629,7 @@ function getWordDirection(codePoints) {
 	const arabicExtendedA = [0x08a0, 0x08ff];
 	const arabicPresentationFormsA = [0xfb50, 0xfdff];
 	const arabicPresentationFormsB = [0xfe70, 0xfeff];
+	const hebrew = [0x0590, 0x05ff];
 
 	const testCases = [
 		arabic,
@@ -636,6 +637,7 @@ function getWordDirection(codePoints) {
 		arabicExtendedA,
 		arabicPresentationFormsA,
 		arabicPresentationFormsB,
+		hebrew,
 	];
 
 	if (
@@ -672,7 +674,9 @@ function addLineWithInlineRTL(
 	const lineElementsAsString = line.inlines.map((e) => e.text).join('');
 
 	// Use that string to create a bidi instance
-	const bidiString = bidi.from_string(lineElementsAsString).reorder_visually();
+	const bidiString = bidi
+		.from_string(lineElementsAsString, { direction: 'LTR' })
+		.reorder_visually();
 
 	// The bidi instance contains string_arr, which is the original string represented
 	// by a single array of codepoints. Call convertWordsToCodepoints in order to
@@ -1144,7 +1148,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			this.defaultStyle
 		);
 		styleStack.push(textNode);
-		styleStack.push({ font: 'NotoSansArabic' });
+		styleStack.push({ font: 'NotoSansRTL' });
 		const availableWidth = this.writer.context().availableWidth;
 
 		return addLineWithInlineRTL(
@@ -1165,7 +1169,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			this.defaultStyle
 		);
 		styleStack.push(textNode);
-		styleStack.push({ font: 'NotoSansArabic', alignment: 'right' });
+		styleStack.push({ font: 'NotoSansRTL', alignment: 'right' });
 		transformLineForRtl(line, styleStack, textTools, textNode);
 	}
 
