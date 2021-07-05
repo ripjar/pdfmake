@@ -1,9 +1,9 @@
 var fonts = {
-	NotoSansArabic: {
-		normal: "examples/fonts/NotoSansEnglishArabic-reg.ttf",
-		bold: "examples/fonts/NotoSansEnglishArabic-Bold.ttf",
-		italics: "examples/fonts/NotoSansEnglishArabic-reg.ttf",
-		bolditalics: "examples/fonts/NotoSansEnglishArabic-Bold.ttf",
+	NotoSansRTL: {
+		normal: "examples/fonts/NotoSansRTL-Regular.ttf",
+		bold: "examples/fonts/NotoSansRTL-Bold.ttf",
+		italics: "examples/fonts/NotoSansRTL-Regular.ttf",
+		bolditalics: "examples/fonts/NotoSansRTL-Bold.ttf",
 	},
 	Roboto: {
 		normal: "examples/fonts/Roboto-Regular.ttf",
@@ -18,7 +18,7 @@ var printer = new PdfPrinter(fonts);
 var fs = require("fs");
 
 // for ease of assigning fonts
-const arabic = "NotoSansArabic";
+const arabic = "NotoSansRTL";
 const english = "Roboto";
 
 const shortEnglish = "The man and his dog";
