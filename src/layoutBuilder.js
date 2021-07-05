@@ -582,6 +582,7 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 }
 
 function convertWordsToInlineCodepoints(lineAsArrayOfCodepoints) {
+	const whiteSpaceAsCodePoint = 32;
 	// Contains the codepoints for each word in the line.
 	var arrayOfCodePoints = [];
 
@@ -605,7 +606,13 @@ function convertWordsToInlineCodepoints(lineAsArrayOfCodepoints) {
 			arrayOfCodePoints.push(currentWord);
 			currentWord = [];
 		} else if (index + 1 === lineAsArrayOfCodepoints.length) {
+			const direction = getWordDirection(currentWord);
 			currentWord.push(lineAsArrayOfCodepoints[index]);
+			// similar to above, if we hit the end of a line (or a newline character)
+			// we need to add a whitespace codepoint
+			if (direction === 'RTL') {
+				currentWord.unshift(whiteSpaceAsCodePoint);
+			}
 			arrayOfCodePoints.push(currentWord);
 			currentWord = [];
 		} else {
