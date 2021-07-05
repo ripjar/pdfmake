@@ -581,6 +581,69 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	});
 }
 
+function convertWordsToInlineCodepoints(lineAsArrayOfCodepoints) {
+	// Contains the codepoints for each word in the line.
+	var arrayOfCodePoints = [];
+
+	// The word being extracted in the form of codepoints from the
+	// transformed line.
+	var currentWord = [];
+
+	// Loop over each codepoint in the transformed line and extract the words
+	// as codepoints.
+	for (var index = 0; index < lineAsArrayOfCodepoints.length; index++) {
+		// if we encounter a space and this is not the first codepoint
+		if (lineAsArrayOfCodepoints[index] === 32 && currentWord.length) {
+			// we need to add the space on to the correct end of the word, depending
+			// on the currentWord's direction
+			const direction = getWordDirection(currentWord);
+			if (direction === 'LTR') {
+				currentWord.push(lineAsArrayOfCodepoints[index]);
+			} else if (direction === 'RTL') {
+				currentWord.unshift(lineAsArrayOfCodepoints[index]);
+			}
+			arrayOfCodePoints.push(currentWord);
+			currentWord = [];
+		} else if (index + 1 === lineAsArrayOfCodepoints.length) {
+			currentWord.push(lineAsArrayOfCodepoints[index]);
+			arrayOfCodePoints.push(currentWord);
+			currentWord = [];
+		} else {
+			currentWord.push(lineAsArrayOfCodepoints[index]);
+		}
+	}
+	return arrayOfCodePoints;
+}
+
+function getWordDirection(codePoints) {
+	// TODO expand for hebrew
+	const arabic = [0x0600, 0x06ff];
+	const arabicSupplement = [0x0750, 0x077f];
+	const arabicExtendedA = [0x08a0, 0x08ff];
+	const arabicPresentationFormsA = [0xfb50, 0xfdff];
+	const arabicPresentationFormsB = [0xfe70, 0xfeff];
+
+	const testCases = [
+		arabic,
+		arabicSupplement,
+		arabicExtendedA,
+		arabicPresentationFormsA,
+		arabicPresentationFormsB,
+	];
+
+	if (
+		codePoints.some((codePoint) => {
+			return testCases.some(([testLow, testHigh]) => {
+				return testLow <= codePoint && codePoint <= testHigh;
+			});
+		})
+	) {
+		return 'RTL';
+	} else {
+		return 'LTR';
+	}
+}
+
 /**
  * Takes the inlines from the current line. Reorders the inlines using BIDI. After reordering
  * the inlines it uses them to make a new line and returns that line
@@ -608,18 +671,21 @@ function addLineWithInlineRTL(
 	// by a single array of codepoints. Call convertWordsToCodepoints in order to
 	// get back an array (representing the line) of arrays (representing the words) of
 	// codepoints (representing the individual characters)
-	const wordsAsArraysOfCodePoints = convertWordsToCodepoints(
+	const wordsAsArraysOfCodePoints = convertWordsToInlineCodepoints(
 		bidiString.string_arr
 	);
 	const arrayOfTransformedWords = [];
 
 	// Copied from transformLineForRtl, this fills our arrayOfTransformedWords
 	wordsAsArraysOfCodePoints.forEach((wordAsCodePoints) => {
+		const direction = getWordDirection(wordAsCodePoints);
 		const wordAsString = spreadify(
 			String.fromCharCode,
 			String
 		)(wordAsCodePoints);
-		const bidiWord = bidi.from_string(wordAsString).reorder_visually();
+		const bidiWord = bidi
+			.from_string(wordAsString, { direction })
+			.reorder_visually();
 		arrayOfTransformedWords.push(bidiWord.toString());
 	});
 
