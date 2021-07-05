@@ -57,9 +57,16 @@ const generateTestString = (string) => {
 // accepts an array of arrays [string, language]
 const generateInlineRtlTest = (stringsAndLanguages = []) => {
 	const nestedTextArray = [];
-	stringsAndLanguages.forEach(([string, language]) => {
+	stringsAndLanguages.forEach(([string, language], i) => {
+		let displayString = string;
+		// from the UI we're expecting to get space separated chunks of
+		// inline text, so this adds a space to all strings apart from first and
+		// last
+		if (i !== stringsAndLanguages.length - 1) {
+			displayString += " ";
+		}
 		nestedTextArray.push({
-			text: string,
+			text: displayString,
 			font: language,
 			inlineRtl: language === arabic,
 		});
@@ -106,35 +113,35 @@ const ENGLISH_ARABIC_TESTS = [
 	generateTestString("Short"),
 	// NB have to manually add end of line spaces here
 	generateInlineRtlTest([
-		[shortEnglish + " ", english],
+		[shortEnglish, english],
 		[shortArabic, arabic],
 	]),
 	generateRtlTest(shortArabic, arabic),
 	newline(),
 	generateTestString("Medium"),
 	generateInlineRtlTest([
-		[mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[mediumArabic, arabic],
 	]),
 	generateRtlTest(mediumArabic, arabic),
 	newline(),
 	generateTestString("Long (english line-break)"),
 	generateInlineRtlTest([
-		[longEnglish + " ", english],
+		[longEnglish, english],
 		[longArabic, arabic],
 	]),
 	generateRtlTest(longArabic, arabic),
 	newline(),
 	generateTestString("Medium-long (arabic line-break)"),
 	generateInlineRtlTest([
-		[mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[longArabic, arabic],
 	]),
 	generateRtlTest(longArabic, arabic),
 	newline(),
 	generateTestString("Medium-long 2 (arabic line-break)"),
 	generateInlineRtlTest([
-		[mediumEnglish + " some nonsense for spacing ", english],
+		[mediumEnglish + " some nonsense for spacing", english],
 		[longArabic, arabic],
 	]),
 	generateRtlTest(longArabic, arabic),
@@ -146,21 +153,21 @@ const ARABIC_ENGLISH_TESTS = [
 	// NB have to manually add spaces here prior to the english string
 	generateInlineRtlTest([
 		[shortArabic, arabic],
-		[" " + shortEnglish + " ", english],
+		[shortEnglish, english],
 	]),
 	generateRtlTest(shortArabic, arabic),
 	newline(),
 	generateTestString("Medium"),
 	generateInlineRtlTest([
 		[mediumArabic, arabic],
-		[" " + mediumEnglish, english],
+		[mediumEnglish, english],
 	]),
 	generateRtlTest(mediumArabic, arabic),
 	newline(),
 	generateTestString("Long (english line-break)"),
 	generateInlineRtlTest([
 		[longArabic, arabic],
-		[" " + longEnglish, english],
+		[longEnglish, english],
 	]),
 	generateRtlTest(longArabic, arabic),
 	newline(),
@@ -170,7 +177,7 @@ const ARABIC_ENGLISH_TESTS = [
 	generateInlineRtlTest([
 		[longArabic, arabic],
 		[longArabic, arabic],
-		[" " + mediumEnglish, english],
+		[mediumEnglish, english],
 	]),
 	generateRtlTest(longArabic, arabic),
 	newline(),
@@ -178,37 +185,36 @@ const ARABIC_ENGLISH_TESTS = [
 
 const ENGLISH_ARABIC_ENGLISH_TESTS = [
 	generateTestString("Short"),
-	// NB have to manually add end of line spaces here
 	generateInlineRtlTest([
-		[shortEnglish + " ", english],
+		[shortEnglish, english],
 		[shortArabic, arabic],
-		[" " + shortEnglish, english],
+		[shortEnglish, english],
 	]),
 	generateRtlTest(shortArabic, arabic),
 	newline(),
 	generateTestString("Medium"),
 	generateInlineRtlTest([
-		[mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[mediumArabic, arabic],
-		[" " + mediumEnglish, english],
+		[mediumEnglish, english],
 	]),
 	generateRtlTest(mediumArabic, arabic),
 	newline(),
 	generateTestString("Long (english line-break)"),
 	generateInlineRtlTest([
-		[longEnglish + " ", english],
+		[longEnglish, english],
 		[longArabic, arabic],
-		[" " + longEnglish, english],
+		[longEnglish, english],
 	]),
 	generateRtlTest(longArabic, arabic),
 	generateTestString("Long (arabic line-break)"),
 	generateInlineRtlTest([
 		[
-			longEnglish + " some more words to generate an arabic line break ",
+			longEnglish + " some more words to generate an arabic line break",
 			english,
 		],
 		[longArabic, arabic],
-		[" " + longEnglish, english],
+		[longEnglish, english],
 	]),
 	generateRtlTest(longArabic, arabic),
 ];
@@ -218,7 +224,7 @@ const ARABIC_ENGLISH_ARABIC_TESTS = [
 	// NB have to manually add spaces here prior to the english string
 	generateInlineRtlTest([
 		[shortArabic, arabic],
-		[" " + shortEnglish + " ", english],
+		[shortEnglish, english],
 		[shortArabic, arabic],
 	]),
 	generateRtlTest(shortArabic, arabic),
@@ -226,7 +232,7 @@ const ARABIC_ENGLISH_ARABIC_TESTS = [
 	generateTestString("Medium"),
 	generateInlineRtlTest([
 		[mediumArabic, arabic],
-		[" " + mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[mediumArabic, arabic],
 	]),
 	generateRtlTest(mediumArabic, arabic),
@@ -234,7 +240,7 @@ const ARABIC_ENGLISH_ARABIC_TESTS = [
 	generateTestString("Long (english line-break)"),
 	generateInlineRtlTest([
 		[longArabic, arabic],
-		[" " + longEnglish + " ", english],
+		[longEnglish, english],
 		[longArabic, arabic],
 	]),
 	generateRtlTest(longArabic, arabic),
@@ -242,7 +248,7 @@ const ARABIC_ENGLISH_ARABIC_TESTS = [
 	generateTestString("Double long (arabic line-break)"),
 	generateInlineRtlTest([
 		[longArabic, arabic],
-		[" " + mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[longArabic, arabic],
 	]),
 	generateRtlTest(longArabic, arabic),
@@ -252,11 +258,11 @@ const ARABIC_ENGLISH_ARABIC_TESTS = [
 const MIXED_TESTS = [
 	generateTestString("mix of strings, arabic order long, medium, short"),
 	generateInlineRtlTest([
-		[mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[longArabic, arabic],
-		[" " + shortEnglish + " ", english],
+		[shortEnglish, english],
 		[mediumArabic, arabic],
-		[" " + mediumEnglish + " ", english],
+		[mediumEnglish, english],
 		[shortArabic, arabic],
 	]),
 	generateRtlTest(longArabic, arabic),
