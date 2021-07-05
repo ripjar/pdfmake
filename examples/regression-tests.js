@@ -30,14 +30,15 @@ const longEnglishWithNewlines =
 // implemented to avoid word order problems
 
 const arabic = "NotoSansArabic";
-const shortArabic = "الرجل وكلبه ";
-const mediumArabic = "الرجل وكلبه وقطته ";
+const fudge = " ";
+const shortArabic = "الرجل وكلبه";
+const mediumArabic = "الرجل وكلبه وقطته";
 const longArabic =
-	"ذهب الرجل وكلبه وقطته وثعبانه في نزهة طويلة حقًا للتأكد من أنهم بدأوا خطًا جديدًا ";
+	"ذهب الرجل وكلبه وقطته وثعبانه في نزهة طويلة حقًا للتأكد من أنهم بدأوا خطًا جديدًا";
 const longArabicWithPunctuation =
-	"الرجل كلبه: قطه! وذهب (الأفعى) {} في نزهة <طويلة> حقًا من أجل / ضمان؟ أن ... بدأوا سطرًا جديدًا ";
+	"الرجل كلبه: قطه! وذهب (الأفعى) {} في نزهة <طويلة> حقًا من أجل / ضمان؟ أن ... بدأوا سطرًا جديدًا";
 const longArabicWithNewlines =
-	"الرجل وكلبه وقطته \nوذهب ثعبانه في نزهة طويلة حقًا \nلاختبار الخطوط الجديدة ";
+	"الرجل وكلبه وقطته\nوذهب ثعبانه في نزهة طويلة حقًا\nلاختبار الخطوط الجديدة";
 
 let testCounter = 0;
 const generateTestHeader = (string) => {
@@ -53,40 +54,68 @@ const newline = () => {
 	return { text: "\n" };
 };
 
+const ENGLISH_TESTS = [
+	generateTestString("Short line"),
+	generateTest(shortEnglish),
+	newline(),
+	generateTestString("Medium line"),
+	generateTest(mediumEnglish),
+	newline(),
+	generateTestString("Long line"),
+	generateTest(longEnglish),
+	newline(),
+	generateTestString("Long line plus punctuation"),
+	generateTest(longEnglishWithPunctuation),
+	newline(),
+	generateTestString("Long line with newline characters"),
+	generateTest(longEnglishWithNewlines),
+	newline(),
+];
+
+const ARABIC_TESTS = [
+	generateTestString(
+		"Short line (second entry with manually appended space at end)"
+	),
+	generateTest(shortArabic, arabic),
+	newline(),
+	generateTest(shortArabic + fudge, arabic),
+	newline(),
+	generateTestString(
+		"Medium line (second entry with manually appended space at end)"
+	),
+	generateTest(mediumArabic, arabic),
+	newline(),
+	generateTest(mediumArabic + fudge, arabic),
+	newline(),
+	generateTestString(
+		"Long line (second entry with manually appended space at end)"
+	),
+	generateTest(longArabic, arabic),
+	newline(),
+	generateTest(longArabic + fudge, arabic),
+	newline(),
+	generateTestString(
+		"Long line plus punctuation (second entry with manually appended space at end)"
+	),
+	generateTest(longArabicWithPunctuation, arabic),
+	newline(),
+	generateTest(longArabicWithPunctuation + fudge, arabic),
+	newline(),
+	generateTestString(
+		"Long line with newline characters (second entry with manually appended space at end of each line)"
+	),
+	generateTest(longArabicWithNewlines, arabic),
+	newline(),
+	generateTest(longArabicWithNewlines.replace("\n", " \n") + fudge, arabic),
+	newline(),
+];
+
 var docDefinition = {
 	content: [
 		generateTestHeader("ENGLISH TESTS"),
-		generateTestString("Short line"),
-		generateTest(shortEnglish),
-		newline(),
-		generateTestString("Medium line"),
-		generateTest(mediumEnglish),
-		newline(),
-		generateTestString("Long line"),
-		generateTest(longEnglish),
-		newline(),
-		generateTestString("Long line plus punctuation"),
-		generateTest(longEnglishWithPunctuation),
-		newline(),
-		generateTestString("Long line with newline characters"),
-		generateTest(longEnglishWithNewlines),
-		newline(),
-		generateTestHeader("ARABIC TESTS (using previous rtl technique)"),
-		generateTestString("Short line"),
-		generateTest(shortArabic, arabic),
-		newline(),
-		generateTestString("Medium line"),
-		generateTest(mediumArabic, arabic),
-		newline(),
-		generateTestString("Long line"),
-		generateTest(longArabic, arabic),
-		newline(),
-		generateTestString("Long line plus punctuation"),
-		generateTest(longArabicWithPunctuation, arabic),
-		newline(),
-		generateTestString("Long line with newline characters"),
-		generateTest(longArabicWithNewlines, arabic),
-		newline(),
+		...ENGLISH_TESTS,
+		generateTestHeader("ARABIC TESTS (using rtl as used in articles)"),
+		...ARABIC_TESTS,
 	],
 };
 
