@@ -25,6 +25,8 @@ const shortEnglish = "The man and his dog";
 const mediumEnglish = "The man and his dog and his cat";
 const longEnglish =
 	"The man and his dog and his cat and his snake went for a really long walk to ensure that they started a new line";
+const superLongEnglish =
+	"The man and his dog and his cat and his snake went for a really long walk to ensure that they started a new line but the problem was that this wasn't necessarily a new line in arabic";
 const longEnglishWithPunctuation =
 	"The man, [his] dog: his cat! and his (snake) went {} for a really <long> walk to /ensure? that ...they started a new line";
 const longEnglishWithNewlines =
@@ -37,6 +39,8 @@ const shortArabic = "الرجل وكلبه ";
 const mediumArabic = "الرجل وكلبه وقطته ";
 const longArabic =
 	"ذهب الرجل وكلبه وقطته وثعبانه في نزهة طويلة حقًا للتأكد من أنهم بدأوا خطًا جديدًا ";
+const superLongArabic =
+	"ذهب الرجل وكلبه وقطته وثعبانه في نزهة طويلة حقًا للتأكد من أنهم بدأوا سطرًا جديدًا ولكن المشكلة كانت أن هذا لم يكن بالضرورة سطرًا جديدًا باللغة العربية ";
 const longArabicWithPunctuation =
 	"الرجل كلبه: قطه! وذهب (الأفعى) {} في نزهة <طويلة> حقًا من أجل / ضمان؟ أن ... بدأوا سطرًا جديدًا ";
 const longArabicWithNewlines =
@@ -83,6 +87,10 @@ const ARABIC_TESTS = [
 	generateTestString("Long line"),
 	generateInlineRtlTest([[longArabic, arabic]]),
 	generateRtlTest(longArabic, arabic),
+	newline(),
+	generateTestString("Super long line"),
+	generateInlineRtlTest([[superLongArabic, arabic]]),
+	generateRtlTest(superLongArabic, arabic),
 	newline(),
 	generateTestString("Long line plus punctuation"),
 	generateInlineRtlTest([[longArabicWithPunctuation, arabic]]),
@@ -231,9 +239,7 @@ const ARABIC_ENGLISH_ARABIC_TESTS = [
 	]),
 	generateRtlTest(longArabic, arabic),
 	newline(),
-	generateTestString(
-		"Double long (arabic line-break), nb this entire first line reads right to left"
-	),
+	generateTestString("Double long (arabic line-break)"),
 	generateInlineRtlTest([
 		[longArabic, arabic],
 		[" " + mediumEnglish + " ", english],
