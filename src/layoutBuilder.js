@@ -1077,14 +1077,6 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 
 	var isForceContinue = false;
 
-	// The textNodes.text property can be a string or an array, depending on
-	// the input to pdfMake. As the inlineRtl flag is designed to deal with the
-	// cases where array input is used, we need to check if we have an array and
-	// if so, whether it contains any inlineRtl
-	const inputIsArray = Array.isArray(textNode.text);
-	const containsInlineRtl =
-		inputIsArray && textNode.text.some((inline) => inline.inlineRtl);
-
 	while (
 		textNode._inlines &&
 		textNode._inlines.length > 0 &&
@@ -1139,7 +1131,9 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		isForceContinue = inline.noNewLine && !isHardWrap;
 	}
 
-	if (containsInlineRtl) {
+	// The inlineRtl flag is passed through automatically. We only want to run the
+	// inline rtl function if the line contains something with the inlineRtl flag
+	if (line.inlines.some((inline) => inline.inlineRtl)) {
 		// TODO Pretty sure that both of these RTL functions can be combined into one
 		// but in the interests of making changes non-breaking I'm not going to
 		// attempt it during this work
