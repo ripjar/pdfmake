@@ -86,44 +86,46 @@ const newline = () => {
 
 var docDefinition = {
 	content: [
-		{
-			text: [
-				{
-					text: [
-						{
-							text: "KYC - Admin\n",
-							font: "Roboto",
-							style: "commentUser",
-							inlineRtl: false,
-						},
-					],
-				},
-				{ text: "05 Jul 2021 at 4:21 PM\n", style: "commentTimestamp" },
-				{
-					text: [
-						{
-							text: "Some english then ",
-							font: "Roboto",
-							style: "",
-							inlineRtl: false,
-						},
-						{
-							text: "قليلا من العربية  ",
-							font: "NotoSansRTL",
-							style: "",
-							inlineRtl: true,
-						},
-						{
-							text: "and more",
-							font: "Roboto",
-							style: "",
-							inlineRtl: false,
-						},
-					],
-				},
-				{ text: "\n\n" },
-			],
-		},
+		[
+			{
+				text: [
+					{
+						text: [
+							{
+								text: "KYC - Admin\n",
+								font: "Roboto",
+								style: "commentUser",
+								inlineRtl: false,
+							},
+						],
+					},
+					{ text: "05 Jul 2021 at 4:21 PM\n", style: "commentTimestamp" },
+					{
+						text: [
+							{
+								text: "Some english then ",
+								font: "Roboto",
+								style: "",
+								inlineRtl: false,
+							},
+							{
+								text: "قليلا من العربية  ",
+								font: "NotoSansRTL",
+								style: "",
+								inlineRtl: true,
+							},
+							{
+								text: "and more",
+								font: "Roboto",
+								style: "",
+								inlineRtl: false,
+							},
+						],
+					},
+					{ text: "\n\n" },
+				],
+			},
+		],
 	],
 };
 
