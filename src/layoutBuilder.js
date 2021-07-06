@@ -1,23 +1,23 @@
-'use strict';
+"use strict";
 
-var TraversalTracker = require('./traversalTracker');
-var DocPreprocessor = require('./docPreprocessor');
-var DocMeasure = require('./docMeasure');
-var DocumentContext = require('./documentContext');
-var PageElementWriter = require('./pageElementWriter');
-var ColumnCalculator = require('./columnCalculator');
-var TableProcessor = require('./tableProcessor');
-var Line = require('./line');
-var isString = require('./helpers').isString;
-var isArray = require('./helpers').isArray;
-var pack = require('./helpers').pack;
-var offsetVector = require('./helpers').offsetVector;
-var fontStringify = require('./helpers').fontStringify;
-var isFunction = require('./helpers').isFunction;
-var spreadify = require('./helpers').spreadify;
-var TextTools = require('./textTools');
-var StyleContextStack = require('./styleContextStack');
-var bidi = require('./twitter-cldr/bidi');
+var TraversalTracker = require("./traversalTracker");
+var DocPreprocessor = require("./docPreprocessor");
+var DocMeasure = require("./docMeasure");
+var DocumentContext = require("./documentContext");
+var PageElementWriter = require("./pageElementWriter");
+var ColumnCalculator = require("./columnCalculator");
+var TableProcessor = require("./tableProcessor");
+var Line = require("./line");
+var isString = require("./helpers").isString;
+var isArray = require("./helpers").isArray;
+var pack = require("./helpers").pack;
+var offsetVector = require("./helpers").offsetVector;
+var fontStringify = require("./helpers").fontStringify;
+var isFunction = require("./helpers").isFunction;
+var spreadify = require("./helpers").spreadify;
+var TextTools = require("./textTools");
+var StyleContextStack = require("./styleContextStack");
+var bidi = require("./twitter-cldr/bidi");
 
 function addAll(target, otherArray) {
 	otherArray.forEach(function (item) {
@@ -79,21 +79,21 @@ LayoutBuilder.prototype.layoutDocument = function (
 		linearNodeList.forEach(function (node) {
 			var nodeInfo = {};
 			[
-				'id',
-				'text',
-				'ul',
-				'ol',
-				'table',
-				'image',
-				'qr',
-				'canvas',
-				'columns',
-				'headlineLevel',
-				'style',
-				'pageBreak',
-				'pageOrientation',
-				'width',
-				'height',
+				"id",
+				"text",
+				"ul",
+				"ol",
+				"table",
+				"image",
+				"qr",
+				"canvas",
+				"columns",
+				"headlineLevel",
+				"style",
+				"pageBreak",
+				"pageOrientation",
+				"width",
+				"height",
 			].forEach(function (key) {
 				if (node[key] !== undefined) {
 					nodeInfo[key] = node[key];
@@ -114,7 +114,7 @@ LayoutBuilder.prototype.layoutDocument = function (
 		});
 
 		return linearNodeList.some(function (node, index, followingNodeList) {
-			if (node.pageBreak !== 'before' && !node.pageBreakCalculated) {
+			if (node.pageBreak !== "before" && !node.pageBreakCalculated) {
 				node.pageBreakCalculated = true;
 				var pageNumber = node.nodeInfo.pageNumbers[0];
 
@@ -150,7 +150,7 @@ LayoutBuilder.prototype.layoutDocument = function (
 						})
 					)
 				) {
-					node.pageBreak = 'before';
+					node.pageBreak = "before";
 					return true;
 				}
 			}
@@ -226,7 +226,7 @@ LayoutBuilder.prototype.tryLayoutDocument = function (
 	);
 
 	var _this = this;
-	this.writer.context().tracker.startTracking('pageAdded', function () {
+	this.writer.context().tracker.startTracking("pageAdded", function () {
 		_this.addBackground(background);
 	});
 
@@ -347,8 +347,8 @@ LayoutBuilder.prototype.addWatermark = function (
 		return;
 	}
 
-	watermark.font = watermark.font || defaultStyle.font || 'Roboto';
-	watermark.color = watermark.color || 'black';
+	watermark.font = watermark.font || defaultStyle.font || "Roboto";
+	watermark.color = watermark.color || "black";
 	watermark.opacity = watermark.opacity || 0.6;
 	watermark.bold = watermark.bold || false;
 	watermark.italics = watermark.italics || false;
@@ -501,12 +501,12 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 		.map(function (element) {
 			return element.text;
 		})
-		.join('');
+		.join("");
 
 	// Run the line as a string through the BIDI algorithm
 	// This will resolve the ordering of the words in the sentence
 	// but will flip the characters in each RTL word.
-	var bidiString = bidi.from_string(lineElementsAsString, { direction: 'RTL' });
+	var bidiString = bidi.from_string(lineElementsAsString, { direction: "RTL" });
 	bidiString.reorder_visually();
 
 	// With the line in the correct order, we need to resolve the
@@ -536,7 +536,7 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 			String
 		)(arrayOfCodePoints[groupIndex]);
 		// Run the word through BIDI to reorder the characters
-		var bidiWord = bidi.from_string(groupString, { direction: 'RTL' });
+		var bidiWord = bidi.from_string(groupString, { direction: "RTL" });
 		bidiWord.reorder_visually();
 
 		// Push the word to what will be the final line array
@@ -547,7 +547,7 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	// Include original styling of the node as a whole e.g. if the whole body of text is bold
 	// then make sure this gets passed through.
 	var updatedInlines = textTools.buildInlines(
-		[{ text: arrayOfTransformedWords.join(''), style: textNode.style }],
+		[{ text: arrayOfTransformedWords.join(""), style: textNode.style }],
 		styleStack
 	);
 
@@ -565,12 +565,23 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 		// TODO I don't know how this will stack up again LTR words. Will need
 		// to evaluate once we have mixed fonts support.
 
-		// This needs to use find because the arrays inlinesBeforeTransformation and 
+		// This needs to use find because the arrays inlinesBeforeTransformation and
 		// updatedInlines are not necessarily the same lengths (due to how the reversal
 		// interacts with whitespace and punctuation in some cases)
-		var oldInline = inlinesBeforeTransformation.find((oldInline) =>
-			inline.text.includes(oldInline.text.trim())
+		let oldInlineIndex = inlinesBeforeTransformation.find(
+			(oldInline) => inline.text.trim() === oldInline.text.trim()
 		);
+		if (oldInlineIndex === -1) {
+			oldInlineIndex = inlinesBeforeTransformation.find((oldInline) =>
+				inline.text.includes(oldInline.text.trim())
+			);
+		}
+		if (oldInlineIndex === -1) {
+			oldInlineIndex = inlinesBeforeTransformation.find((oldInline) =>
+				oldInline.text.includes(inline.text.trim())
+			);
+		}
+		var oldInline = inlinesBeforeTransformation[oldInlineIndex];
 		var newInline = inline;
 		if (oldInline) {
 			newInline.style = oldInline.style;
@@ -578,6 +589,8 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 			newInline.font = oldInline.font;
 			newInline.decoration = oldInline.decoration;
 			newInline.decorationColor = oldInline.decorationColor;
+		} else {
+			console.log('COULD NOT FIND: ${newInline.text}`)
 		}
 		return line.addInline(newInline);
 	});
@@ -600,9 +613,9 @@ function convertWordsToInlineCodepoints(lineAsArrayOfCodepoints) {
 			// we need to add the space on to the correct end of the word, depending
 			// on the currentWord's direction
 			const direction = getWordDirection(currentWord);
-			if (direction === 'LTR') {
+			if (direction === "LTR") {
 				currentWord.push(lineAsArrayOfCodepoints[index]);
-			} else if (direction === 'RTL') {
+			} else if (direction === "RTL") {
 				currentWord.unshift(lineAsArrayOfCodepoints[index]);
 			}
 			arrayOfCodePoints.push(currentWord);
@@ -612,7 +625,7 @@ function convertWordsToInlineCodepoints(lineAsArrayOfCodepoints) {
 			currentWord.push(lineAsArrayOfCodepoints[index]);
 			// similar to above, if we hit the end of a line (or a newline character)
 			// we need to add a whitespace codepoint
-			if (direction === 'RTL') {
+			if (direction === "RTL") {
 				currentWord.unshift(whiteSpaceAsCodePoint);
 			}
 			arrayOfCodePoints.push(currentWord);
@@ -648,9 +661,9 @@ function getWordDirection(codePoints) {
 			});
 		})
 	) {
-		return 'RTL';
+		return "RTL";
 	} else {
-		return 'LTR';
+		return "LTR";
 	}
 }
 
@@ -681,18 +694,18 @@ function addLineWithInlineRTL(
 	// CJK gets split up into individual characters in the pdfmake generated line, so we need
 	// to deal with this differently as the bidiWord we get back later comes back as a string
 	// of CJK characters
-	let CJKbuffer = { text: '', font: 'NotoSansCJK', style: '' };
+	let CJKbuffer = { text: "", font: "NotoSansCJK", style: "" };
 	line.inlines.forEach((word, index, array) => {
 		// extract the parts we're interested in, and to avoid whitespace woes we will
 		// key using the trimmed text
 		const isLastWord = index === array.length - 1;
-		const lastCharWasSpace = word.text.slice(-1) === ' ';
+		const lastCharWasSpace = word.text.slice(-1) === " ";
 		const text = word.text.trim();
-		const font = word.font.name.split('-')[0].replace('TCRegular', '');
+		const font = word.font.name.split("-")[0].replace("TCRegular", "");
 		const style = word.style;
 		const alignment = word.alignment;
 
-		if (font === 'NotoSansCJK') {
+		if (font === "NotoSansCJK") {
 			// for CJK add the text to the buffer
 			CJKbuffer.text += text;
 			CJKbuffer.font = font;
@@ -705,7 +718,7 @@ function addLineWithInlineRTL(
 					style: CJKbuffer.style,
 					alignment: CJKbuffer.alignment,
 				};
-				CJKbuffer.text = '';
+				CJKbuffer.text = "";
 			}
 		} else {
 			// non-CJK words are broken up as we want for both LTR and RTL languages
@@ -714,11 +727,11 @@ function addLineWithInlineRTL(
 	});
 
 	// Turn the inlines into a single string
-	const lineElementsAsString = line.inlines.map((e) => e.text).join('');
+	const lineElementsAsString = line.inlines.map((e) => e.text).join("");
 
 	// Use that string to create a bidi instance
 	const bidiString = bidi
-		.from_string(lineElementsAsString, { direction: 'LTR' })
+		.from_string(lineElementsAsString, { direction: "LTR" })
 		.reorder_visually();
 
 	// The bidi instance contains string_arr, which is the original string represented
@@ -748,7 +761,9 @@ function addLineWithInlineRTL(
 		let originalTextNode = wordPropsLookup[bidiWord.trim()];
 		if (!originalTextNode) {
 			// there has been a problem most likely caused by punctuation
-			const originalTextKey = Object.keys(wordPropsLookup).find(word => word.includes(bidiWord)) || '';
+			const originalTextKey =
+				Object.keys(wordPropsLookup).find((word) => word.includes(bidiWord)) ||
+				"";
 			originalTextNode = wordPropsLookup[originalTextKey] || {};
 		}
 		const newTextNode = Object.assign(originalTextNode, {
@@ -762,10 +777,10 @@ function addLineWithInlineRTL(
 	arrayOfTransformedWords.forEach((word, index, array) => {
 		if (
 			array[index - 1] &&
-			word.font !== 'NotoSansRTL' &&
-			array[index - 1].font === 'NotoSansRTL'
+			word.font !== "NotoSansRTL" &&
+			array[index - 1].font === "NotoSansRTL"
 		) {
-			word.text = ' ' + word.text;
+			word.text = " " + word.text;
 		}
 	});
 
@@ -835,7 +850,7 @@ LayoutBuilder.prototype.processNode = function (node) {
 			self.processQr(node);
 		} else if (!node._span) {
 			throw (
-				'Unrecognized document structure: ' +
+				"Unrecognized document structure: " +
 				JSON.stringify(node, fontStringify)
 			);
 		}
@@ -852,7 +867,7 @@ LayoutBuilder.prototype.processNode = function (node) {
 	function applyMargins(callback) {
 		var margin = node._margin;
 
-		if (node.pageBreak === 'before') {
+		if (node.pageBreak === "before") {
 			self.writer.moveToNextPage(node.pageOrientation);
 		}
 
@@ -868,7 +883,7 @@ LayoutBuilder.prototype.processNode = function (node) {
 			self.writer.context().moveDown(margin[3]);
 		}
 
-		if (node.pageBreak === 'after') {
+		if (node.pageBreak === "after") {
 			self.writer.moveToNextPage(node.pageOrientation);
 		}
 	}
@@ -927,7 +942,7 @@ LayoutBuilder.prototype.processRow = function (
 	var pageBreaks = [],
 		positions = [];
 
-	this.tracker.auto('pageChanged', storePageBreakData, function () {
+	this.tracker.auto("pageChanged", storePageBreakData, function () {
 		widths = widths || columns;
 
 		self.writer.context().beginColumnGroup();
@@ -991,9 +1006,9 @@ LayoutBuilder.prototype.processRow = function (
 			var endingRow = tableRow + column.rowSpan - 1;
 			if (endingRow >= tableBody.length) {
 				throw (
-					'Row span for column ' +
+					"Row span for column " +
 					columnIndex +
-					' (with indexes starting from 0) exceeded row count'
+					" (with indexes starting from 0) exceeded row count"
 				);
 			}
 			return tableBody[endingRow][columnIndex];
@@ -1012,7 +1027,7 @@ LayoutBuilder.prototype.processList = function (orderedList, node) {
 	this.writer.context().addMargin(gapSize.width);
 
 	var nextMarker;
-	this.tracker.auto('lineAdded', addMarkerToFirstLeaf, function () {
+	this.tracker.auto("lineAdded", addMarkerToFirstLeaf, function () {
 		items.forEach(function (item) {
 			nextMarker = item.listMarker;
 			self.processNode(item);
@@ -1065,7 +1080,7 @@ LayoutBuilder.prototype.processTable = function (tableNode) {
 			height = rowHeights;
 		}
 
-		if (height === 'auto') {
+		if (height === "auto") {
 			height = undefined;
 		}
 
@@ -1228,7 +1243,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			this.defaultStyle
 		);
 		styleStack.push(textNode);
-		styleStack.push({ font: 'NotoSansRTL', alignment: 'right' });
+		styleStack.push({ font: "NotoSansRTL", alignment: "right" });
 		transformLineForRtl(line, styleStack, textTools, textNode);
 	}
 
