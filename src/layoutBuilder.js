@@ -670,26 +670,40 @@ function addLineWithInlineRTL(
 	textNode,
 	availableWidth
 ) {
-	// The textNode contains *all* of the text that is in the... node. This represents the input
-	// that has been sent to pdfmake so contains any inline styles and, more importantly, the
-	// fonts for each string. We need access to this information later so need to make a lookup
-	
-	// NB there is an inherent problem with this - repeated words in *the entire node* will 
+	// line.inlines contains every word that will appear on this line in an an array of objects
+	// We want to use these to generate a lookup so that we can reassign the fonts/styles after
+	// we've reordered the words in the line
+	// NB there is an inherent problem with this - repeated words in the line will
 	// only get one entry in the lookup, so styling may not pass through completely correctly
-	const textNodeLookup = {};
-	textNode.text.forEach((line) => {
-		// split the line text and trim it to avoid lookup issues after the bidi process
-		const words = line.text
-			.split(/\s/)
-			.filter(Boolean) // don't want any zero length strings in there
-			.map((word) => word.trim());
-		for (let word of words) {
-			textNodeLookup[word] = {};
-			for (let key in line) {
-				if (key !== 'text') {
-					textNodeLookup[word][key] = line[key];
-				}
+	const wordPropsLookup = {};
+
+	// CJK gets split up into individual characters in the pdfmake generated line, so we need
+	// to deal with this differently as the bidiWord we get back later comes back as a string
+	// of CJK characters
+	let CJKbuffer = { text: '', font: 'NotoSansCJK', style: '' };
+	line.inlines.forEach((word) => {
+		// extract the parts we're interested in
+		const text = word.text;
+		const font = word.font.name.split('-')[0].replace('TCRegular', '');
+		const style = word.style;
+
+		if (font === 'NotoSansCJK') {
+			// for CJK add the text to the buffer
+			CJKbuffer.text += text;
+			CJKbuffer.font = font;
+			CJKbuffer.style = style;
+			// if we hit a space we need to add that to the lookup to deal with different
+			// adjacent languages in the line
+			if (text.includes(' ')) {
+				wordPropsLookup[CJKbuffer.text] = {
+					font: CJKbuffer.font,
+					style: CJKbuffer.style,
+				};
+				CJKbuffer.text = '';
 			}
+		} else {
+			// non-CJK words are broken up as we want for both LTR and RTL languages
+			wordPropsLookup[text] = { font, style };
 		}
 	});
 
@@ -724,11 +738,23 @@ function addLineWithInlineRTL(
 
 		// although we now have the correct word, we've stripped it of the styling information
 		// passed from the digest-pdf-export process, so now we use the lookup to add that back
-		const originalTextNode = textNodeLookup[bidiWord.trim()];
+		const originalTextNode = wordPropsLookup[bidiWord] || {};
 		const newTextNode = Object.assign(originalTextNode, {
 			text: bidiWord,
 		});
 		arrayOfTransformedWords.push(newTextNode);
+	});
+
+	// the current implementation still struggles with spacing between RTL to LTR language transitions,
+	// so manually apped a space in these cases before rebuilding the inlines
+	arrayOfTransformedWords.forEach((v, i, a) => {
+		if (
+			a[i - 1] &&
+			v.font !== 'NotoSansRTL' &&
+			a[i - 1].font === 'NotoSansRTL'
+		) {
+			v.text = ' ' + v.text;
+		}
 	});
 
 	// Using this arrayOfTransformedWords, we need to rebuild the inlines,
