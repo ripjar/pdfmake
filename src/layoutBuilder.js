@@ -598,11 +598,12 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 function transformRtlInlines(inlines, node, styleStack, textTools) {
 	const wordPropsLookup = {};
 
-	// make the lookup => easier as only dealing with RTL now
+	// make a lookup for each of the words in the line, where we can keep their fonts and styles
+	// so that we can reapply them later
 	inlines.forEach((inline) => {
 		// in most cases this first case will suffice, but punctuation isn't handled consistently
-		// and so if we have a space inside the trimmed text, we'll add those as keys too to ensure
-		// a successful lookup
+		// and so if we have a space inside the trimmed text, we'll split the lineand add those 
+		// strings as keys too to ensure a successful lookup
 		const text = inline.text.trim();
 		const lookupObject = {
 			font: 'NotoSansRTL',
@@ -669,10 +670,11 @@ function transformRtlInlines(inlines, node, styleStack, textTools) {
  * @param {StyleContextStack} styleStack The style context used when rebuilding the inlines
  * @param {TextTools} textTools Used to rebuild the inlines
  * @param {Object} textNode The original textNode that contains the nested inline rtl text
- * @param {Number} availableWidth the line width being used
+ * @param {Number} availableWidth the line width being used, required to build a new line
  * @returns {Line}
  */
-function turboBidi(line, styleStack, textTools, textNode, availableWidth) {
+
+function addLineWithInlineRTL(line, styleStack, textTools, textNode, availableWidth) {
 	// line.inlines contains all the words that fit on the line. We will create a new line and
 	// loop through these words. If the word is not RTL, we'll add it to the new line immediately.
 	// If the line is RTL, we'll collect up all the RTL words in that block and then transform
@@ -1137,14 +1139,13 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		const styleStack = this.docMeasure.styleStack.clone();
 		styleStack.push(textNode);
 		const availableWidth = this.writer.context().availableWidth;
-		return turboBidi(line, styleStack, textTools, textNode, availableWidth);
-		// return addLineWithInlineRTL(
-		// 	line,
-		// 	styleStack,
-		// 	textTools,
-		// 	textNode,
-		// 	availableWidth
-		// );
+		return addLineWithInlineRTL(
+			line,
+			styleStack,
+			textTools,
+			textNode,
+			availableWidth
+		);
 	}
 
 	// RTL text has to be transformed before being rendered to the PDF
