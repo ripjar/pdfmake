@@ -670,6 +670,29 @@ function addLineWithInlineRTL(
 	textNode,
 	availableWidth
 ) {
+	// The textNode contains *all* of the text that is in the... node. This represents the input
+	// that has been sent to pdfmake so contains any inline styles and, more importantly, the
+	// fonts for each string. We need access to this information later so need to make a lookup
+	
+	// NB there is an inherent problem with this - repeated words in *the entire node* will 
+	// only get one entry in the lookup, so styling may not pass through completely correctly
+	const textNodeLookup = {};
+	textNode.text.forEach((line) => {
+		// split the line text and trim it to avoid lookup issues after the bidi process
+		const words = line.text
+			.split(/\s/)
+			.filter(Boolean) // don't want any zero length strings in there
+			.map((word) => word.trim());
+		for (let word of words) {
+			textNodeLookup[word] = {};
+			for (let key in line) {
+				if (key !== 'text') {
+					textNodeLookup[word][key] = line[key];
+				}
+			}
+		}
+	});
+
 	// Turn the inlines into a single string
 	const lineElementsAsString = line.inlines.map((e) => e.text).join('');
 
@@ -696,14 +719,22 @@ function addLineWithInlineRTL(
 		)(wordAsCodePoints);
 		const bidiWord = bidi
 			.from_string(wordAsString, { direction })
-			.reorder_visually();
-		arrayOfTransformedWords.push(bidiWord.toString());
+			.reorder_visually()
+			.toString();
+
+		// although we now have the correct word, we've stripped it of the styling information
+		// passed from the digest-pdf-export process, so now we use the lookup to add that back
+		const originalTextNode = textNodeLookup[bidiWord.trim()];
+		const newTextNode = Object.assign(originalTextNode, {
+			text: bidiWord,
+		});
+		arrayOfTransformedWords.push(newTextNode);
 	});
 
 	// Using this arrayOfTransformedWords, we need to rebuild the inlines,
 	// passing through the textNode original style
 	const updatedInlines = textTools.buildInlines(
-		[{ text: arrayOfTransformedWords.join(''), style: textNode.style }],
+		[{ text: arrayOfTransformedWords, style: textNode.style }],
 		styleStack
 	);
 
@@ -1137,12 +1168,8 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		// TODO Pretty sure that both of these RTL functions can be combined into one
 		// but in the interests of making changes non-breaking I'm not going to
 		// attempt it during this work
-		const styleStack = new StyleContextStack(
-			this.styleDictionary,
-			this.defaultStyle
-		);
+		const styleStack = this.docMeasure.styleStack.clone();
 		styleStack.push(textNode);
-		styleStack.push({ font: 'NotoSansRTL' });
 		const availableWidth = this.writer.context().availableWidth;
 
 		return addLineWithInlineRTL(
@@ -1153,6 +1180,7 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 			availableWidth
 		);
 	}
+
 	// RTL text has to be transformed before being rendered to the PDF
 	// to ensure the validity of the output.
 	if (textNode.rtl) {
