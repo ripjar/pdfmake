@@ -602,13 +602,15 @@ function transformRtlInlines(inlines, node, styleStack, textTools) {
 	// so that we can reapply them later
 	inlines.forEach((inline) => {
 		// in most cases this first case will suffice, but punctuation isn't handled consistently
-		// and so if we have a space inside the trimmed text, we'll split the lineand add those 
+		// and so if we have a space inside the trimmed text, we'll split the line and add those
 		// strings as keys too to ensure a successful lookup
 		const text = inline.text.trim();
 		const lookupObject = {
 			font: 'NotoSansRTL',
 			style: inline.style,
 			alignment: inline.alignment,
+			decorationColor: inline.decorationColor,
+			decoration: inline.decoration,
 		};
 		wordPropsLookup[text] = lookupObject;
 		if (/\s/.test(text)) {
@@ -653,7 +655,9 @@ function transformRtlInlines(inlines, node, styleStack, textTools) {
 	});
 
 	// need to add a space manually to the end of an RTL inline run
-	arrayOfTransformedWords[arrayOfTransformedWords.length - 1].text += ' ';
+	if (arrayOfTransformedWords.length > 0) {
+		arrayOfTransformedWords[arrayOfTransformedWords.length - 1].text += ' ';
+	}
 
 	const updatedInlines = textTools.buildInlines(
 		[{ text: arrayOfTransformedWords, style: node.style }],
@@ -674,7 +678,13 @@ function transformRtlInlines(inlines, node, styleStack, textTools) {
  * @returns {Line}
  */
 
-function addLineWithInlineRTL(line, styleStack, textTools, textNode, availableWidth) {
+function addLineWithInlineRTL(
+	line,
+	styleStack,
+	textTools,
+	textNode,
+	availableWidth
+) {
 	// line.inlines contains all the words that fit on the line. We will create a new line and
 	// loop through these words. If the word is not RTL, we'll add it to the new line immediately.
 	// If the line is RTL, we'll collect up all the RTL words in that block and then transform
