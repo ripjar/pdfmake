@@ -689,6 +689,7 @@ function addLineWithInlineRTL(
 		const text = word.text.trim();
 		const font = word.font.name.split('-')[0].replace('TCRegular', '');
 		const style = word.style;
+		const alignment = word.alignment;
 
 		if (font === 'NotoSansCJK') {
 			// for CJK add the text to the buffer
@@ -701,12 +702,13 @@ function addLineWithInlineRTL(
 				wordPropsLookup[CJKbuffer.text] = {
 					font: CJKbuffer.font,
 					style: CJKbuffer.style,
+					alignment: CJKbuffer.alignment,
 				};
 				CJKbuffer.text = '';
 			}
 		} else {
 			// non-CJK words are broken up as we want for both LTR and RTL languages
-			wordPropsLookup[text] = { font, style };
+			wordPropsLookup[text] = { font, style, alignment };
 		}
 	});
 
@@ -1192,10 +1194,10 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		isForceContinue = inline.noNewLine && !isHardWrap;
 	}
 
-	// The inlineRtl flag is passed through automatically. Only run the inline version 
+	// The inlineRtl flag is passed through automatically. Only run the inline version
 	// of the function if rtl isn't set, but inlineRtl is (to avoid breaking changes)
 	if (!textNode.rtl && line.inlines.some((inline) => inline.inlineRtl)) {
-		// This code allows us to copy the existing styleStack (so we can use inline styles to 
+		// This code allows us to copy the existing styleStack (so we can use inline styles to
 		// change the fonts or word styling)
 		const styleStack = this.docMeasure.styleStack.clone();
 		styleStack.push(textNode);
