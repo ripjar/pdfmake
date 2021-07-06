@@ -553,9 +553,8 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 
 	// Wipe the existing words (inlines) from this line ...
 	line.inlines = [];
-
 	// ... and replace them with our new BIDI-ified, reversed inlines
-	updatedInlines.items.forEach(function (inline, index) {
+	updatedInlines.items.forEach(function (inline) {
 		// Where the BIDI algorithm has appropriately transformed the content
 		// we can be confident that the postions of the words have been reversed.
 		// For example, a word that was at position 0 prior to the transformation will
@@ -565,10 +564,9 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 
 		// TODO I don't know how this will stack up again LTR words. Will need
 		// to evaluate once we have mixed fonts support.
-		var oldInline =
-			inlinesBeforeTransformation[
-				inlinesBeforeTransformation.length - 1 - index
-			];
+		var oldInline = inlinesBeforeTransformation.find((oldInline) =>
+			inline.text.includes(oldInline.text.trim())
+		);
 		var newInline = inline;
 		if (oldInline) {
 			newInline.style = oldInline.style;
