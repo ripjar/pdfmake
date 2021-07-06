@@ -1,9 +1,9 @@
 var fonts = {
-	NotoSansArabic: {
-		normal: "examples/fonts/NotoSansEnglishArabic-reg.ttf",
-		bold: "examples/fonts/NotoSansEnglishArabic-Bold.ttf",
-		italics: "examples/fonts/NotoSansEnglishArabic-reg.ttf",
-		bolditalics: "examples/fonts/NotoSansEnglishArabic-Bold.ttf",
+	NotoSansRTL: {
+		normal: "examples/fonts/NotoSansRTL-Regular.ttf",
+		bold: "examples/fonts/NotoSansRTL-Bold.ttf",
+		italics: "examples/fonts/NotoSansRTL-Regular.ttf",
+		bolditalics: "examples/fonts/NotoSansRTL-Bold.ttf",
 	},
 	Roboto: {
 		normal: "examples/fonts/Roboto-Regular.ttf",
@@ -29,7 +29,7 @@ const longEnglishWithNewlines =
 // A space is then manually added to the RHS of the string - required for current way that BIDI is
 // implemented to avoid word order problems
 
-const arabic = "NotoSansArabic";
+const arabic = "NotoSansRTL";
 const shortArabic = "الرجل وكلبه ";
 const mediumArabic = "الرجل وكلبه وقطته ";
 const longArabic =
