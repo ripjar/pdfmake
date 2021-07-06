@@ -681,9 +681,12 @@ function addLineWithInlineRTL(
 	// to deal with this differently as the bidiWord we get back later comes back as a string
 	// of CJK characters
 	let CJKbuffer = { text: '', font: 'NotoSansCJK', style: '' };
-	line.inlines.forEach((word) => {
-		// extract the parts we're interested in
-		const text = word.text;
+	line.inlines.forEach((word, index, array) => {
+		// extract the parts we're interested in, and to avoid whitespace woes we will
+		// key using the trimmed text
+		const isLastWord = index === array.length - 1;
+		const lastCharWasSpace = word.text.slice(-1) === ' ';
+		const text = word.text.trim();
 		const font = word.font.name.split('-')[0].replace('TCRegular', '');
 		const style = word.style;
 
@@ -693,8 +696,8 @@ function addLineWithInlineRTL(
 			CJKbuffer.font = font;
 			CJKbuffer.style = style;
 			// if we hit a space we need to add that to the lookup to deal with different
-			// adjacent languages in the line
-			if (text.includes(' ')) {
+			// adjacent CJK languages in the line
+			if (lastCharWasSpace || isLastWord) {
 				wordPropsLookup[CJKbuffer.text] = {
 					font: CJKbuffer.font,
 					style: CJKbuffer.style,
@@ -738,7 +741,8 @@ function addLineWithInlineRTL(
 
 		// although we now have the correct word, we've stripped it of the styling information
 		// passed from the digest-pdf-export process, so now we use the lookup to add that back
-		const originalTextNode = wordPropsLookup[bidiWord] || {};
+		// noting that we have keyed by trimmed words
+		const originalTextNode = wordPropsLookup[bidiWord.trim()] || {};
 		const newTextNode = Object.assign(originalTextNode, {
 			text: bidiWord,
 		});
@@ -747,13 +751,13 @@ function addLineWithInlineRTL(
 
 	// the current implementation still struggles with spacing between RTL to LTR language transitions,
 	// so manually apped a space in these cases before rebuilding the inlines
-	arrayOfTransformedWords.forEach((v, i, a) => {
+	arrayOfTransformedWords.forEach((word, index, array) => {
 		if (
-			a[i - 1] &&
-			v.font !== 'NotoSansRTL' &&
-			a[i - 1].font === 'NotoSansRTL'
+			array[index - 1] &&
+			word.font !== 'NotoSansRTL' &&
+			array[index - 1].font === 'NotoSansRTL'
 		) {
-			v.text = ' ' + v.text;
+			word.text = ' ' + word.text;
 		}
 	});
 
@@ -1188,12 +1192,11 @@ LayoutBuilder.prototype.buildNextLine = function (textNode) {
 		isForceContinue = inline.noNewLine && !isHardWrap;
 	}
 
-	// The inlineRtl flag is passed through automatically. We only want to run the
-	// inline rtl function if the line contains something with the inlineRtl flag
-	if (line.inlines.some((inline) => inline.inlineRtl)) {
-		// TODO Pretty sure that both of these RTL functions can be combined into one
-		// but in the interests of making changes non-breaking I'm not going to
-		// attempt it during this work
+	// The inlineRtl flag is passed through automatically. Only run the inline version 
+	// of the function if rtl isn't set, but inlineRtl is (to avoid breaking changes)
+	if (!textNode.rtl && line.inlines.some((inline) => inline.inlineRtl)) {
+		// This code allows us to copy the existing styleStack (so we can use inline styles to 
+		// change the fonts or word styling)
 		const styleStack = this.docMeasure.styleStack.clone();
 		styleStack.push(textNode);
 		const availableWidth = this.writer.context().availableWidth;
