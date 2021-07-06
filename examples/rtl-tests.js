@@ -54,31 +54,19 @@ const cjk = "NotoSansCJK";
 const rtl = "NotoSansRTL";
 const english = "Roboto";
 
-const mediumEnglish = "The man and his dog and his cat";
 // ARABIC
 const shortArabic = "الرجل وكلبه ";
 const mediumArabic = "الرجل وكلبه وقطته ";
 const longArabic =
 	"ذهب الرجل وكلبه وقطته وثعبانه في نزهة طويلة حقًا للتأكد من أنهم بدأوا خطًا جديدًا ";
-const superLongArabic =
-	"ذهب الرجل وكلبه وقطته وثعبانه في نزهة طويلة حقًا للتأكد من أنهم بدأوا سطرًا جديدًا ولكن المشكلة كانت أن هذا لم يكن بالضرورة سطرًا جديدًا باللغة العربية ";
-const longArabicWithPunctuation =
-	"الرجل كلبه: قطه! وذهب (الأفعى) {} في نزهة <طويلة> حقًا من أجل / ضمان؟ أن ... بدأوا سطرًا جديدًا ";
-const longArabicWithNewlines =
-	"الرجل وكلبه وقطته \nوذهب ثعبانه في نزهة طويلة حقًا \nلاختبار الخطوط الجديدة ";
 
 // HEBREW
 const shortHebrew = "האיש וכלבו ";
 const mediumHebrew = "האיש וכלבו והחתול שלו ";
 const longHebrew =
 	"האיש וכלבו והחתול שלו והנחש שלו יצאו לטיול ממש ארוך כדי להבטיח שהם מתחילים קו חדש ";
-const superLongHebrew =
-	"האיש וכלבו והחתול שלו והנחש שלו יצאו לטיול ממש ארוך כדי להבטיח שהם מתחילים קו חדש אבל הבעיה הייתה שזה לא בהכרח קו חדש בעברית ";
-const longHebrewWithPunctuation =
-	"האיש, הכלב שלו: החתול שלו! שלו (הנחש) הלך {} להליכה ממש <ארוכה> כדי / להבטיח? ש ... הם התחילו קו חדש ";
-const longHebrewWithNewlines =
-	"האיש וכלבו והחתול שלו \nוהנחש שלו הלך לטייל ממש ארוך \nכדי לבדוק קווים חדשים ";
 
+// OTHER LTR SCRIPTS
 const mediumBangla = "লোকটি এবং তার কুকুর এবং তার বিড়াল";
 const mediumChinese = "男人和他的狗和他的猫";
 const mediumJapanese = "男と彼の犬と彼の猫";
@@ -277,6 +265,27 @@ const HEBREW_TESTS = [
 	newline(),
 ];
 
+const LARGE_TESTS = [
+	generateTestString("Arabic and hebrew strings for ref"),
+	generateRtlTest(longArabic, arabic),
+	generateRtlTest(shortArabic, arabic),
+	generateRtlTest(longHebrew, hebrew),
+	generateRtlTest(shortHebrew, hebrew),
+	generateInlineRtlTest([
+		["This sentence will contain all scripts", english],
+		[longArabic, arabic],
+		[mediumChinese, cjk],
+		["and some more english", english],
+		[mediumHebrew, hebrew],
+		[mediumJapanese, cjk],
+		[mediumKorean, cjk],
+		[shortArabic, arabic],
+		[mediumBangla, bangla],
+		[shortHebrew, hebrew],
+		[mediumHindi, hindi],
+		["thank goodness that's over.", english],
+	]),
+];
 var docDefinition = {
 	content: [
 		generateTestHeader("Test nesting"),
@@ -290,25 +299,7 @@ var docDefinition = {
 		generateTestHeader("Hebrew vs LTR fonts"),
 		...HEBREW_TESTS,
 		generateTestHeader("All scripts megamix"),
-		generateTestString("Arabic and hebrew strings for ref"),
-		generateRtlTest(longArabic, arabic),
-		generateRtlTest(shortArabic, arabic),
-		generateRtlTest(longHebrew, hebrew),
-		generateRtlTest(shortHebrew, hebrew),
-		generateInlineRtlTest([
-			["This sentence will contain all scripts", english],
-			[longArabic, arabic],
-			[mediumChinese, cjk],
-			["and some more english", english],
-			[mediumHebrew, hebrew],
-			[mediumJapanese, cjk],
-			[mediumKorean, cjk],
-			[shortArabic, arabic],
-			[mediumBangla, bangla],
-			[shortHebrew, hebrew],
-			[mediumHindi, hindi],
-			["thank goodness that's over.", english],
-		]),
+		...LARGE_TESTS,
 	],
 };
 
