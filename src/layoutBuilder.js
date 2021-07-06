@@ -564,6 +564,10 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 
 		// TODO I don't know how this will stack up again LTR words. Will need
 		// to evaluate once we have mixed fonts support.
+
+		// This needs to use find because the arrays inlinesBeforeTransformation and 
+		// updatedInlines are not necessarily the same lengths (due to how the reversal
+		// interacts with whitespace and punctuation in some cases)
 		var oldInline = inlinesBeforeTransformation.find((oldInline) =>
 			inline.text.includes(oldInline.text.trim())
 		);
@@ -621,7 +625,6 @@ function convertWordsToInlineCodepoints(lineAsArrayOfCodepoints) {
 }
 
 function getWordDirection(codePoints) {
-	// TODO expand for hebrew
 	const arabic = [0x0600, 0x06ff];
 	const arabicSupplement = [0x0750, 0x077f];
 	const arabicExtendedA = [0x08a0, 0x08ff];
