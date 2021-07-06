@@ -745,7 +745,12 @@ function addLineWithInlineRTL(
 		// although we now have the correct word, we've stripped it of the styling information
 		// passed from the digest-pdf-export process, so now we use the lookup to add that back
 		// noting that we have keyed by trimmed words
-		const originalTextNode = wordPropsLookup[bidiWord.trim()] || {};
+		let originalTextNode = wordPropsLookup[bidiWord.trim()];
+		if (!originalTextNode) {
+			// there has been a problem most likely caused by punctuation
+			const originalTextKey = Object.keys(wordPropsLookup).find(word => word.includes(bidiWord)) || '';
+			originalTextNode = wordPropsLookup[originalTextKey] || {};
+		}
 		const newTextNode = Object.assign(originalTextNode, {
 			text: bidiWord,
 		});
