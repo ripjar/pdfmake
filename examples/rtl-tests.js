@@ -288,19 +288,46 @@ const LARGE_TESTS = [
 ];
 var docDefinition = {
 	content: [
-		generateTestHeader("Test nesting"),
-		generateTestString(
-			"Comment from an alert, lifted directly from digest-pdf-export"
-		),
-		commentFromDigestPdfExport,
-		newline(),
-		generateTestHeader("Arabic vs LTR fonts"),
-		...ARABIC_TESTS,
-		generateTestHeader("Hebrew vs LTR fonts"),
-		...HEBREW_TESTS,
-		generateTestHeader("All scripts megamix"),
-		...LARGE_TESTS,
+		// generateTestHeader("Test nesting"),
+		// generateTestString(
+		// 	"Comment from an alert, lifted directly from digest-pdf-export"
+		// ),
+		// commentFromDigestPdfExport,
+		// newline(),
+		// generateTestHeader("Arabic vs LTR fonts"),
+		// ...ARABIC_TESTS,
+		// generateTestHeader("Hebrew vs LTR fonts"),
+		// ...HEBREW_TESTS,
+		// generateTestHeader("All scripts megamix"),
+		// ...LARGE_TESTS,
+		// highlighting test
+		{
+			text: [
+				{ text: "تلقى الأمير  ", font: "NotoSansRTL", style: "" },
+				{
+					text: [
+						{
+							text: "محمد بن سلمان بن عبدالعزيز ",
+							font: "NotoSansRTL",
+							style: "personAlerting",
+						},
+					],
+				},
+				{
+					text: "، ولي العهد السعودي نائب رئيس مجلس الوزراء وزير الدفاع، اتصالاً هاتفياً، اليوم الجمعة، من وزير الخارجية الأميركي مايك بومبيو. ",
+					font: "NotoSansRTL",
+					style: "",
+				},
+			],
+			rtl: true,
+		},
 	],
+	styles: {
+		personAlerting: {
+			background: "#ffd1dd",
+			bold: true,
+		},
+	},
 };
 
 var pdfDoc = printer.createPdfKitDocument(docDefinition);
