@@ -554,6 +554,8 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	// Wipe the existing words (inlines) from this line ...
 	line.inlines = [];
 	// ... and replace them with our new BIDI-ified, reversed inlines
+	const rtlPunctuationRegex =
+		/[\u060C\u060D\u061B\u061E\u061F\u066A\u066B\u066C\u066D\u06D4]+/u;
 	updatedInlines.items.forEach(function (inline) {
 		// Where the BIDI algorithm has appropriately transformed the content
 		// we can be confident that the postions of the words have been reversed.
@@ -564,24 +566,12 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 
 		// TODO I don't know how this will stack up again LTR words. Will need
 		// to evaluate once we have mixed fonts support.
-
-		// This needs to use find because the arrays inlinesBeforeTransformation and
-		// updatedInlines are not necessarily the same lengths (due to how the reversal
-		// interacts with whitespace and punctuation in some cases)
-		let oldInlineIndex = inlinesBeforeTransformation.find(
-			(oldInline) => inline.text.trim() === oldInline.text.trim()
+		var oldInline = inlinesBeforeTransformation.find(
+			(oldInline) =>
+				oldInline.text.replace(rtlPunctuationRegex, '').trim() ===
+				inline.text.replace(rtlPunctuationRegex, '').trim()
 		);
-		if (oldInlineIndex === -1) {
-			oldInlineIndex = inlinesBeforeTransformation.find((oldInline) =>
-				inline.text.includes(oldInline.text.trim())
-			);
-		}
-		if (oldInlineIndex === -1) {
-			oldInlineIndex = inlinesBeforeTransformation.find((oldInline) =>
-				oldInline.text.includes(inline.text.trim())
-			);
-		}
-		var oldInline = inlinesBeforeTransformation[oldInlineIndex];
+
 		var newInline = inline;
 		if (oldInline) {
 			newInline.style = oldInline.style;
@@ -590,7 +580,6 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 			newInline.decoration = oldInline.decoration;
 			newInline.decorationColor = oldInline.decorationColor;
 		}
-
 		return line.addInline(newInline);
 	});
 }
