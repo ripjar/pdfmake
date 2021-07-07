@@ -483,6 +483,19 @@ function convertWordsToCodepoints(lineAsArrayOfCodepoints) {
 	return arrayOfCodePoints;
 }
 
+const formatRtlForComparison = (text) => {
+	// In order to maximise the chance of matching, we want to first extract out the RTL punctuation. 
+	// Then we trim it before returning it.
+
+	// taken from the unicode standard, contains arabic comma, arabic date separator, arabic semicolon,
+	// arabic triple dot punctuation mark, arabic question mark, arabic percent sign, arabic decimal separator,
+	// arabic thousands separator, arabic five pointed star, arabic full stop
+	const rtlPunctuationRegex =
+		/[\u060C\u060D\u061B\u061E\u061F\u066A\u066B\u066C\u066D\u06D4]+/u; 
+
+	return text.replace(rtlPunctuationRegex, '').trim();
+};
+
 /**
  * Takes a line of input containing RTL text, runs it through a BIDI algorithm
  * to correctly the order the line and then re-runs each word through the BIDI
@@ -554,9 +567,11 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 	// Wipe the existing words (inlines) from this line ...
 	line.inlines = [];
 	// ... and replace them with our new BIDI-ified, reversed inlines
-	const rtlPunctuationRegex =
-		/[\u060C\u060D\u061B\u061E\u061F\u066A\u066B\u066C\u066D\u06D4]+/u;
-	updatedInlines.items.forEach(function (inline) {
+
+	// as we'll be using Array.find(), want to reverse the inlines to allow us to match
+	// more accurately
+	inlinesBeforeTransformation.reverse();
+	updatedInlines.items.forEach(function (inline, index) {
 		// Where the BIDI algorithm has appropriately transformed the content
 		// we can be confident that the postions of the words have been reversed.
 		// For example, a word that was at position 0 prior to the transformation will
@@ -566,11 +581,16 @@ function transformLineForRtl(line, styleStack, textTools, textNode) {
 
 		// TODO I don't know how this will stack up again LTR words. Will need
 		// to evaluate once we have mixed fonts support.
-		var oldInline = inlinesBeforeTransformation.find(
-			(oldInline) =>
-				oldInline.text.replace(rtlPunctuationRegex, '').trim() ===
-				inline.text.replace(rtlPunctuationRegex, '').trim()
-		);
+
+		// We slice the (now reversed) old inline array to avoid styling common names (eg mohammed)
+		// the same way which could occur if we used .find on the original array
+		var oldInline = inlinesBeforeTransformation
+			.slice(index)
+			.find((oldInline) => {
+				const oldText = formatRtlForComparison(oldInline.text);
+				const newText = formatRtlForComparison(inline.text);
+				return oldText.includes(newText) || newText.includes(oldText);
+			});
 
 		var newInline = inline;
 		if (oldInline) {
