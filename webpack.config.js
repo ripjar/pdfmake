@@ -2,6 +2,7 @@ var path = require("path");
 var StringReplacePlugin = require("string-replace-webpack-plugin");
 var webpack = require("webpack");
 var pkg = require("./package.json");
+var UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 var banner =
 	"/*! " +
@@ -156,7 +157,7 @@ module.exports = {
 	plugins: [
 		new StringReplacePlugin(),
 
-		new webpack.optimize.UglifyJsPlugin({
+		new UglifyJsPlugin({
 			include: /\.min\.js$/,
 			sourceMap: true,
 			uglifyOptions: {
